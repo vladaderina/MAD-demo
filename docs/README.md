@@ -1,1 +1,4 @@
-### Документация к проекту [KubeAnomaly](https://github.com/vladaderina/KubeAnomaly)
+# KubeAnomaly
+Система для поиска аномалий в метриках Control Plane компонент
+
+### [Полная документация](https://vladaderina.github.io/KubeAnomalyDocs/)
