@@ -1,5 +1,7 @@
 site_name: KubeAnomalyDocs
 
+docs_dir: mkdocs
+
 site_url: https://vladaderina.github.io/KubeAnomalyDocs/
 
 site_description: Документация по проекту KubeAnomaly
