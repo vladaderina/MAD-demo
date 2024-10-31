@@ -10,6 +10,10 @@ repo_url: https://github.com/vladaderina/KubeAnomalyDocs/tree/main
 
 theme:
   name: material
+  features:
+    - content.code.copy
+  icon:
+    annotation: material/arrow-right-circle
 
 nav:
   - Описание: index.md
@@ -25,11 +29,28 @@ nav:
 extra_css:
     - css/extra.css
 
+plugins:
+  - search
+  - table-reader
+
 markdown_extensions:
     - toc:
         permalink: true
     - admonition
     - attr_list
     - def_list
+    - pymdownx.superfences:
+        custom_fences:
+          - name: mermaid
+            class: mermaid
+            format: !!python/name:pymdownx.superfences.fence_code_format
+    - pymdownx.highlight:
+        anchor_linenums: true
+        line_spans: __span
+        pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - attr_list
+    - md_in_html
 
 copyright: Copyright &copy; 2024 <a href="https://t.me/vladaderina">Vlada Derina</a>.
