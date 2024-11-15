@@ -19,26 +19,20 @@ Description=Minikube Kubernetes Cluster
 After=network.target
 
 [Service]
-Type=simple
 User=vderina
 ExecStart=/usr/local/bin/minikube start --extra-config=scheduler.bind-address=192.168.49.2 --extra-config=controller-manager.bind-address=192.168.49.2
 ExecStop=/usr/local/bin/minikube stop
 Restart=on-failure
-RestartSec=5
+RestartSec=always
 
 [Install]
 WantedBy=multi-user.target
 
-# Перезагрузите системный демон
-sudo systemctl daemon-reload
+# Перезагрузка, включение и запуск системного демона
 
-# Включите сервис
-sudo systemctl enable minikube.service
+systemctl daemon-reload && systemctl start minikube && systemctl enable minikube
 
-# Запустите сервис
-sudo systemctl start minikube.service
-
-# Проверьте состояние сервиса
+# Проверка состояния сервиса
 sudo systemctl status minikube.service
 
 3 шаг. Установка и конфигурирование Victoria Metrics
