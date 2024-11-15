@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    hostPathProvisionerIdentity: 890c9590-bb3e-4939-bbf6-32b67f855c7f
+    pv.kubernetes.io/provisioned-by: k8s.io/minikube-hostpath
+  creationTimestamp: "2024-11-13T18:17:25Z"
+  finalizers:
+  - kubernetes.io/pv-protection
+  name: pvc-c5fe5669-3739-4c29-901c-5a7a8ada6042
+  resourceVersion: "1070557"
+  uid: 522bc2c4-4639-43ba-83cc-9ef2e68d08a0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 8Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: prometheus-server
+    namespace: default
+    resourceVersion: "1055291"
+    uid: c5fe5669-3739-4c29-901c-5a7a8ada6042
+  hostPath:
+    path: /tmp/hostpath-provisioner/default/prometheus-server
+    type: ""
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+  volumeMode: Filesystem
+status:
+  lastPhaseTransitionTime: "2024-11-14T10:00:06Z"
+  phase: Released
