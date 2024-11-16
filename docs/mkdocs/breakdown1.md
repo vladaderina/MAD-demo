@@ -40,7 +40,7 @@
 1.  Перезапустили port-forwarding для Grafana. Стали отображаться метрики. Но на момент поломки кластера с 16:10 до 17:20 метрики отсутствуют.
 ![Image title](images/9.png)
 
-1.  Victoria Metrics выдает новую ошибку: **"Error executing query: Failed to fetch. Please check your serverURL settings and confirm server availability."**         
+1.  Victoria Metrics выдает новую ошибку: **"Error executing query: Failed to fetch"**.       
 ![Image title](images/6.png)
-1.  Prometheus выдает новую ошибку: **"Error executing query: Failed to fetch"**.
+1.  Prometheus выдает новую ошибку: **"Error executing query: Failed to fetch. Please check your serverURL settings and confirm server availability."**  
 ![Image title](images/7.png)
