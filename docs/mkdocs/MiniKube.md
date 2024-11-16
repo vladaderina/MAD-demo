@@ -21,14 +21,15 @@ sudo nano /etc/systemd/system/minikube.service
 ```bash
 [Unit]
 Description=Minikube Kubernetes Cluster
-After=network.target
+After=network.target docker.service
+Requires=docker.service
 
 [Service]
 User=vderina
 ExecStart=/usr/local/bin/minikube start --extra-config=scheduler.bind-address=192.168.49.2 --extra-config=controller-manager.bind-address=192.168.49.2
 ExecStop=/usr/local/bin/minikube stop
-Restart=on-failure
-RestartSec=always
+Type=simple
+RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
@@ -102,7 +103,11 @@ kubectl --namespace default port-forward $POD_NAME 3000 &>/dev/null &
 ```
 **Адрес UI:** http://localhost:3000
 
+<<<<<<< HEAD
 **Логин:** admin
+=======
+Доступ к UI: http://localhost:3000/
+>>>>>>> 4a4d707 (old)
 
 **Пароль** (хранится внутри кластера):
 ```bash
