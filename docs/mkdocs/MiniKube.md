@@ -103,11 +103,7 @@ kubectl --namespace default port-forward $POD_NAME 3000 &>/dev/null &
 ```
 **Адрес UI:** http://localhost:3000
 
-<<<<<<< HEAD
 **Логин:** admin
-=======
-Доступ к UI: http://localhost:3000/
->>>>>>> 4a4d707 (old)
 
 **Пароль** (хранится внутри кластера):
 ```bash
