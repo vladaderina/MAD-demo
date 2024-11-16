@@ -24,11 +24,14 @@ nav:
     - Принципы HA кластера: ha.md
     - Компоненты control plane: cp.md
   - Тестовое окружение:
-      - Кластер в MiniKube: MiniKube.md
+      - Кластер в MiniKube: 
+        - Развертывание: MiniKube.md
+        - Моделируем поломку: breakdown1.md
       - Кластер HA:
-        - Архитектура кластера: architecture.md 
-        - Автоматизированное развертывание VM: vm-deploy.md
-        - Автоматизированное развертывание K8s: k8s-deploy.md
+        - Развертывание:
+          - Архитектура кластера: architecture.md 
+          - Автоматизированное развертывание VM: vm-deploy.md
+          - Автоматизированное развертывание K8s: k8s-deploy.md
 
 extra_css:
     - css/extra.css
