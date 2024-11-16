@@ -106,7 +106,7 @@ kubectl --namespace default port-forward $POD_NAME 3000 &>/dev/null &
 **Логин:** admin
 
 **Пароль** (хранится внутри кластера):
-```bash
+```bash 
 kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 ```
 
