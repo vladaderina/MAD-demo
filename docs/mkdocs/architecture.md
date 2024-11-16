@@ -1,4 +1,4 @@
 ## Схема кластера
-![Image title](Architecture.png){ align=left }
+![Image title](images/Architecture.png){ align=left }
 
 ## Требования по ресурсам 
