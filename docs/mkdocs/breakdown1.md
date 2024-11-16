@@ -11,7 +11,7 @@
 # Postmortem
 1. Скрипт был запущен в 16:03, остановлен ~16:07. Было создано 90 подов. Нагрузка на api сервер росла (см. фото ниже), но кластер работал, все поды были в статусе Running.
 ![alt text](images/0.png)
-1. На этапе удаления всех подов получили ошибку: **"Error from server: etcdserver: request timed out".**
+1. На этапе удаления всех подов получили ошибку: **"Error from server: etcdserver: request timed out".**               
 ![Image title](images/1.png)
 
 
