@@ -2,11 +2,37 @@
 
 Скрипт по развертыванию подов с интервалом в 2 секунды:
 ```bash
-{% include-markdown "create_pods.sh" %}
+#!/bin/bash
+
+# Указываем имя пода и образ, который будет использоваться
+POD_NAME_PREFIX="my-pod"
+IMAGE="nginx"
+
+# Бесконечный цикл для создания подов
+while true; do
+  # Генерируем уникальное имя для пода
+  POD_NAME="${POD_NAME_PREFIX}-$(date +%s%N)"
+  
+  # Создаем под
+  kubectl run $POD_NAME --image=$IMAGE
+  
+  # Ждем 2 секунды перед созданием следующего пода
+  sleep 2
+done
 ```
 Скрипт по удалению подов:
 ```bash
-{% include-markdown "delete_pods.sh" %}
+#!/bin/bash
+
+# Указываем префикс имени пода
+POD_NAME_PREFIX="my-pod"
+
+# Получаем список всех подов с указанным префиксом имени
+PODS=$(kubectl get pods -o jsonpath="{.items[*].metadata.name}" | tr ' ' '\n' | grep "^${POD_NAME_PREFIX}")
+
+# Удаляем все найденные поды
+kubectl delete pods $PODS
+
 ```
 # Postmortem
 1. Скрипт был запущен в 16:03, остановлен ~16:07. Было создано 90 подов. Нагрузка на api сервер росла (см. фото ниже), но кластер работал, все поды были в статусе Running.
