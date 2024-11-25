@@ -67,7 +67,7 @@ helm repo add victoria-metrics https://victoriametrics.github.io/helm-charts/ \
 
 Настроим проброс портов для доступа к UI:
 ```bash
-export POD_NAME=$(kubectl get pods --namespace default -l "app=vmselect" -o jsonpath="{.items[0].metadata.name}")
+export POD_NAME=$(kubectl get pods --namespace default -l "app=vmselect" -o jsonpath="{.items[0].metadata.name}") \
 kubectl --namespace default port-forward $POD_NAME 8481 &>/dev/null &
 ```
 **Адрес UI:** http://localhost:8481/select/0/vmui/
@@ -98,7 +98,7 @@ helm repo add grafana https://grafana.github.io/helm-charts \
 
 Настроим проброс портов для доступа к UI:
 ```bash
-export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=grafana" -o jsonpath="{.items[0].metadata.name}")
+export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=grafana" -o jsonpath="{.items[0].metadata.name}") \
 kubectl --namespace default port-forward $POD_NAME 3000 &>/dev/null &
 ```
 **Адрес UI:** http://localhost:3000
@@ -204,14 +204,14 @@ scrape_configs:
 
 Установка Prometheus с помощью менеджера пакетов [Helm](https://helm.sh/ru/docs/intro/install/):
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-     repo update
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts \
+     repo update \
      install prometheus prometheus-community/prometheus -f prometheus.yaml
 ```
 
 Настроим проброс портов для доступа к UI:
 ```bash
-export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}")
+export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}") \
 kubectl --namespace default port-forward $POD_NAME 9090 &>/dev/null &
 ```
 
