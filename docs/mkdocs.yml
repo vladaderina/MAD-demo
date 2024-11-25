@@ -1,14 +1,14 @@
-site_name: KubeAnomalyDocs
+site_name: KubeAnomaly
 
 docs_dir: mkdocs
 
-site_url: https://vladaderina.github.io/KubeAnomalyDocs/
+site_url: https://vladaderina.github.io/KubeAnomaly/
 
 site_description: Документация по проекту KubeAnomaly
 
 site_author: Vlada Derina
 
-repo_url: https://github.com/vladaderina/KubeAnomalyDocs/tree/main
+repo_url: https://github.com/vladaderina/KubeAnomaly/tree/main
 
 theme:
   name: material
