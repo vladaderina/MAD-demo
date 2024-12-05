@@ -4,4 +4,4 @@ graph LR
   S[scheduler] --> A;
   K[kubelet] --> A;
    C[controller manager] --> A;
-``` 
+```
