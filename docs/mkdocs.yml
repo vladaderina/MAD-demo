@@ -24,10 +24,13 @@ nav:
     - Основные метрики для мониторинга состояния кластера: metrics_types.md
     - Принципы HA кластера: ha.md
     - Компоненты control plane: cp.md
-  - Тестовое окружение:
-      - Кластер в MiniKube: 
-        - Развертывание: MiniKube.md
+  - Развертывание:
+      - Установка minikube: minikube.md
+      - Сбор метрик с control plane: 
+        - Конфигурация: control-plane-metrics.md
         - Моделируем поломку: breakdown1.md
+      - Сбор метрик микросервисного приложения: 
+        - Развертывание: e-commerce.md
       - Кластер HA:
         - Развертывание:
           - Архитектура кластера: architecture.md 
