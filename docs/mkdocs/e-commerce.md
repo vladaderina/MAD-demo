@@ -1,6 +1,8 @@
 ## Сбор метрик с микросервисного приложения
 
-В проекте было использовано демонстрационное приложение [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo)
+В проекте было использовано демонстрационное приложение [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo).
+
+![alt text](images/e-commerce-scheme.png)
 
 #### 1 шаг. Установка minikube
 
