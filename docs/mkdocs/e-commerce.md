@@ -37,9 +37,9 @@ cd microservices-demo/helm-chart/
 helm install my-microservice .
 ```
 Все развернулось успешно:
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
-**3 шаг. Пробуем получить доступ к сервису frontend-external** 
+#### 3 шаг. Настройка внешнего доступа к кластеру
 
 По умолчанию Minikube не пробрасывает порты Kubernetes на хост. Можно пойти двумя путями:
 
@@ -100,7 +100,7 @@ Network Destination        Netmask          Gateway       Interface         Metr
 ```
 Пробуем добраться до виртуальной машины:
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 По итогу шлюз не сработал, потому что в таблице маршрутизации есть две записи с одинаковой метрикой (приоритетом). В таких случаях система выбирает первую подходящую запись и отправляет пакеты по правилам, указанным в ней, игнорируя вторую запись.
 
@@ -115,7 +115,7 @@ route change 192.168.0.0 mask 255.255.0.0 192.168.75.11 metric 10
 
 Пробуем еще раз:
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 Шлюз заработал.
 
@@ -133,11 +133,11 @@ sudo sysctl -p
 
 Все еще нет доступа:
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 В поисках проблемы, проверяем таблицу маршрутизации на сервере:
 
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 
 Для сети 192.168.39.0/24 есть маршрут, так что сервер 192.168.75.11 после получения пакетов от хоста знает, как отправить их отправить ВМ.
 
@@ -149,7 +149,7 @@ sudo iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
 
 Но результат тот же:
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 Команда для проверки какой виртуальный интерфейс к какому мосту подключен:
 
@@ -157,7 +157,7 @@ sudo iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
 bridge link show
 ```
 
-![alt text](image-7.png)
+![alt text](images/image-7.png)
 
 Команда для анализа сетевого трафика:
 
@@ -165,7 +165,7 @@ bridge link show
 sudo tcpdump -i any host 192.168.75.123 and icmp
 ```
 
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 
 Видим, информацию о том, что пакет с IP 192.168.75.123 был отправлен виртуальной машине 192.168.39.24, однако в следующей записи устройство с IP-адресом 192.168.75.11 сообщило устройству 192.168.75.123, что адрес 192.168.39.24 недоступен.
 
@@ -175,7 +175,7 @@ sudo tcpdump -i any host 192.168.75.123 and icmp
 ```
 sudo iptables -L -v -n
 ```
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 
 !!! note "Пояснения к chains, управляемыми libvirt"
 
@@ -220,9 +220,9 @@ sudo iptables -I LIBVIRT_FWI 1 -j ACCEPT
 sudo iptables -I LIBVIRT_FWO 1 -j ACCEPT
 ```
 
-![alt text](image-8.png)
+![alt text](images/image-8.png)
 
 
 Пинг успешно проходит, сайт с хоста 192.168.75.123 открывается по запросу http://192.168.39.24:32728/
 
-![alt text](image-9.png)
+![alt text](images/image-9.png)
