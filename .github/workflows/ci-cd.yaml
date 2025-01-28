@@ -40,5 +40,6 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
+          cd ./KubeAnomaly/KubeAnomaly
           helm upgrade my-microservices ./helm/ \
             --kubeconfig ~/.kube/kubeconfig-github
