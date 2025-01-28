@@ -44,6 +44,8 @@
 
 #### 2 шаг. Настройка GitHub Actions
 
+В GitHub был получен токен репозитория
+
 На сервер 192.168.75.11 были установлены:
 
  - GitHub self-host runner ([офиц. документация](https://github.com/vladaderina/KubeAnomaly/settings/actions/runners/new?arch=x64&os=linux))

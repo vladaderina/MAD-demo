@@ -16,7 +16,7 @@ jobs:
         id: changes
         run: |
           echo "Changed files:"
-          git diff --name-only HEAD^ HEAD
+          git diff --name-only HEAD^ HEAD -- KubeAnomaly/KubeAnomaly/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2

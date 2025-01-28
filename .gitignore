@@ -1,2 +1,12 @@
 venv
 meta
+
+{
+  "agentId": 21,
+  "agentName": "vderina",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus25.actions.githubusercontent.com/sOzxvg22wp6deUXropBxINx1FdRmjaiCcAgDWnpmSclNWij5RR/",
+  "gitHubUrl": "https://github.com/vladaderina/KubeAnomaly",
+  "workFolder": "_work"
+}
