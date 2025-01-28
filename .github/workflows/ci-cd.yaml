@@ -12,12 +12,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Detect changed directories
-        id: changes
-        run: |
-          echo "Changed files:"
-          git diff --name-only HEAD^ HEAD -- KubeAnomaly/KubeAnomaly/
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -30,6 +24,7 @@ jobs:
       - name: Detect changed services
         id: changed-services
         run: |
+          cd ./KubeAnomaly/KubeAnomaly
           changed_files=$(git diff --name-only HEAD^ HEAD)
           services=$(echo "$changed_files" | awk -F/ '{print $1}' | sort | uniq)
           echo "::set-output name=services::$(echo $services | tr '\n' ' ')"
