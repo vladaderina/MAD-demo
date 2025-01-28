@@ -14,9 +14,9 @@
 
 Создаем токен доступа, который будет использоваться GitHub Actions и во вспомогательных скриптах.
 
-Для каждого сервиса был создан репозиторий на [Docker Hub](https://hub.docker.com/) с использованием скрипта `create-repo.py`.
+Для каждого сервиса был создан репозиторий на [Docker Hub](https://hub.docker.com/) с использованием скрипта [`create-repo.py`](https://github.com/vladaderina/KubeAnomaly/blob/main/scripts/docker-hub/create-repo.py).
 
-Ссылки на созданные репозитории (через скрипт `get-link.py`): 
+Ссылки на созданные репозитории (через скрипт [`get-link.py`](https://github.com/vladaderina/KubeAnomaly/blob/main/scripts/docker-hub/get-link.py)): 
 
 [adservice](https://hub.docker.com/r/vladaderina/adservice)
 
@@ -43,5 +43,34 @@
 [productcatalogservice](https://hub.docker.com/r/vladaderina/productcatalogservice)
 
 #### 2 шаг. Настройка GitHub Actions
+
+На сервер 192.168.75.11 были установлены:
+
+ - GitHub self-host runner ([офиц. документация](https://github.com/vladaderina/KubeAnomaly/settings/actions/runners/new?arch=x64&os=linux))
+
+ - Docker Engine ([офиц. документация](https://docs.docker.com/engine/install/ubuntu/))
+
+ - Утилита `yq` с использованием snap:
+
+    ```bash
+    sudo apt install snapd
+    sudo snap install yq
+    ```
+
+Был создан шаблон с ServiceAccount, Role и RoleBinding для github-runner, после чего обновлен релиз:
+```
+helm upgrade my-microservices .
+```
+
+Получен токен аккаунта:
+
+```
+kubectl -n default create token github-runner
+```
+
+
+А еще если в папке с helm были изменения то тоже перекатывать релиз
+
+После этого запускается Helm upgrade который раскатывает новый релиз
 
 #### 3 шаг. Написание Workflow
