@@ -15,8 +15,6 @@ jobs:
       - name: Detect changed services
         id: changed-services
         run: |
-          ls -la
-          cd ./KubeAnomaly/KubeAnomaly
           changed_files=$(git diff --name-only HEAD^ HEAD)
           services=$(echo "$changed_files" | awk -F/ '{print $1}' | sort | uniq)
           echo "::set-output name=services::$(echo $services | tr '\n' ' ')"
@@ -29,7 +27,6 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          ls -la
           for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
               docker build -t ${{ env.DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
@@ -40,7 +37,5 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          ls -la
-          cd ./KubeAnomaly/KubeAnomaly
           helm upgrade my-microservices ./helm/ \
             --kubeconfig ~/.kube/kubeconfig-github
