@@ -19,7 +19,7 @@ jobs:
         run: |
           changed_files=$(git diff --name-only HEAD^ HEAD)
           services=$(echo "$changed_files" | awk -F/ '{print $1}' | sort | uniq)
-          echo services
+          echo $services
           echo "services=$(echo $services | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
