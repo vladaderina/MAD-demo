@@ -19,11 +19,13 @@ jobs:
         run: |
           changed_files=$(git diff --name-only HEAD^ HEAD)
           services=$(echo "$changed_files" | awk -F/ '{print $1}' | sort | uniq)
-          echo "::set-output name=services::$(echo $services | tr '\n' ' ')"
+          echo services
+          echo "services=$(echo $services | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
         run: |
-          for service in ${{ steps.changed-services.outputs.services }}; do
+          cat $GITHUB_OUTPUT
+          for service in $(cat $GITHUB_OUTPUT); do
             if [ -d "src/$service" ]; then
               docker build -t ${{ env.DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
               docker login -u ${{ env.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_TOKEN }}
