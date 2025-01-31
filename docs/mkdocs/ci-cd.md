@@ -64,10 +64,10 @@
 helm upgrade my-microservices .
 ```
 
-Получен токен аккаунта:
+Создан токен аккаунта на 1 год:
 
 ```
-kubectl -n default create token github-runner
+kubectl -n default create token github-runner --duration=8760h
 ```
 
 Остановились на том что поменяли строку во фронте
