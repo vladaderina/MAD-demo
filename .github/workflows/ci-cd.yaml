@@ -46,4 +46,4 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          helm upgrade --kubeconfig ~/.kube/kubeconfig-github my-microservices ./helm/ --values tags.yaml
+          helm upgrade --kubeconfig ~/.kube/kubeconfig-github my-microservices ./helm/
