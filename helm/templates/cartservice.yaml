@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{{- if .Values.cartService.create }}
+{{- if .Values.cartservice.create }}
 {{- if .Values.serviceAccounts.create }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Values.cartService.name }}
+  name: {{ .Values.cartservice.name }}
   namespace: {{.Release.Namespace}}
   {{- with .Values.serviceAccounts.annotations }}
   annotations:
@@ -28,14 +28,14 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.cartService.name }}
+  name: {{ .Values.cartservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.cartService.name }}
+    app: {{ .Values.cartservice.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.cartService.name }}
+      app: {{ .Values.cartservice.name }}
   template:
     metadata:
       {{- if .Values.cartDatabase.externalRedisTlsOrigination.enable }}
@@ -45,10 +45,10 @@ spec:
         proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
       {{- end }}
       labels:
-        app: {{ .Values.cartService.name }}
+        app: {{ .Values.cartservice.name }}
     spec:
       {{- if .Values.serviceAccounts.create }}
-      serviceAccountName: {{ .Values.cartService.name }}
+      serviceAccountName: {{ .Values.cartservice.name }}
       {{- else }}
       serviceAccountName: default
       {{- end }}
@@ -73,7 +73,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: {{ .Values.images.repository }}/{{ .Values.cartService.name }}:{{ .Values.images.tag | default "latest" }}
+        image: {{ .Values.images.repository }}/{{ .Values.cartservice.name }}:{{ .Values.cartservice.tag | default "latest" }}
         ports:
         - containerPort: 7070
         env:
@@ -84,7 +84,7 @@ spec:
         {{- end }}
           value: {{ .Values.cartDatabase.connectionString | quote }}
         resources:
-          {{- toYaml .Values.cartService.resources | nindent 10 }}
+          {{- toYaml .Values.cartservice.resources | nindent 10 }}
         readinessProbe:
           initialDelaySeconds: 15
           grpc:
@@ -98,14 +98,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.cartService.name }}
+  name: {{ .Values.cartservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.cartService.name }}
+    app: {{ .Values.cartservice.name }}
 spec:
   type: ClusterIP
   selector:
-    app: {{ .Values.cartService.name }}
+    app: {{ .Values.cartservice.name }}
   ports:
   - name: grpc
     port: 7070
@@ -115,12 +115,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Values.cartService.name }}
+  name: {{ .Values.cartservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: {{ .Values.cartService.name }}
+      app: {{ .Values.cartservice.name }}
   policyTypes:
   - Ingress
   - Egress
@@ -131,7 +131,7 @@ spec:
           app: {{ .Values.frontend.name }}
     - podSelector:
         matchLabels:
-          app: {{ .Values.checkoutService.name }}
+          app: {{ .Values.checkoutservice.name }}
     ports:
      - port: 7070
        protocol: TCP
@@ -143,12 +143,12 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: Sidecar
 metadata:
-  name: {{ .Values.cartService.name }}
+  name: {{ .Values.cartservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   workloadSelector:
     labels:
-      app: {{ .Values.cartService.name }}
+      app: {{ .Values.cartservice.name }}
   egress:
   - hosts:
     - istio-system/*
@@ -168,19 +168,19 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: {{ .Values.cartService.name }}
+  name: {{ .Values.cartservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.cartService.name }}
+      app: {{ .Values.cartservice.name }}
   rules:
   - from:
     - source:
         principals:
         {{- if .Values.serviceAccounts.create }}
         - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.frontend.name }}
-        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.checkoutService.name }}
+        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.checkoutservice.name }}
         {{- else }}
         - cluster.local/ns/{{ .Release.Namespace }}/sa/default
         {{- end }}
@@ -311,7 +311,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: {{ .Values.cartService.name }}
+          app: {{ .Values.cartservice.name }}
     ports:
      - port: 6379
        protocol: TCP
@@ -349,7 +349,7 @@ spec:
     - source:
         principals:
         {{- if .Values.serviceAccounts.create }}
-        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.cartService.name }}
+        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.cartservice.name }}
         {{- else }}
         - cluster.local/ns/{{ .Release.Namespace }}/sa/default
         {{- end }}

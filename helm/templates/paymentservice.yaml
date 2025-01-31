@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{{- if .Values.paymentService.create }}
+{{- if .Values.paymentservice.create }}
 {{- if .Values.serviceAccounts.create }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Values.paymentService.name }}
+  name: {{ .Values.paymentservice.name }}
   namespace: {{.Release.Namespace}}
   {{- if not .Values.serviceAccounts.annotationsOnlyForCartservice }}
   {{- with .Values.serviceAccounts.annotations }}
@@ -30,21 +30,21 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.paymentService.name }}
+  name: {{ .Values.paymentservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.paymentService.name }}
+    app: {{ .Values.paymentservice.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.paymentService.name }}
+      app: {{ .Values.paymentservice.name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.paymentService.name }}
+        app: {{ .Values.paymentservice.name }}
     spec:
       {{- if .Values.serviceAccounts.create }}
-      serviceAccountName: {{ .Values.paymentService.name }}
+      serviceAccountName: {{ .Values.paymentservice.name }}
       {{- else }}
       serviceAccountName: default
       {{- end }}
@@ -67,7 +67,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: {{ .Values.images.repository }}/{{ .Values.paymentService.name }}:{{ .Values.images.tag | default "latest" }}
+        image: {{ .Values.images.repository }}/{{ .Values.paymentservice.name }}:{{ .Values.paymentservice.tag | default "latest" }}
         ports:
         - containerPort: 50051
         env:
@@ -77,7 +77,7 @@ spec:
         - name: COLLECTOR_SERVICE_ADDR
           value: "{{ .Values.opentelemetryCollector.name }}:4317"
         - name: OTEL_SERVICE_NAME
-          value: "{{ .Values.paymentService.name }}"
+          value: "{{ .Values.paymentservice.name }}"
         {{- end }}
         {{- if .Values.googleCloudOperations.tracing }}
         - name: ENABLE_TRACING
@@ -94,19 +94,19 @@ spec:
           grpc:
             port: 50051
         resources:
-          {{- toYaml .Values.paymentService.resources | nindent 10 }}
+          {{- toYaml .Values.paymentservice.resources | nindent 10 }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.paymentService.name }}
+  name: {{ .Values.paymentservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.paymentService.name }}
+    app: {{ .Values.paymentservice.name }}
 spec:
   type: ClusterIP
   selector:
-    app: {{ .Values.paymentService.name }}
+    app: {{ .Values.paymentservice.name }}
   ports:
   - name: grpc
     port: 50051
@@ -116,12 +116,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Values.paymentService.name }}
+  name: {{ .Values.paymentservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: {{ .Values.paymentService.name }}
+      app: {{ .Values.paymentservice.name }}
   policyTypes:
   - Ingress
   - Egress
@@ -129,7 +129,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: {{ .Values.checkoutService.name }}
+          app: {{ .Values.checkoutservice.name }}
     ports:
      - port: 50051
        protocol: TCP
@@ -141,12 +141,12 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: Sidecar
 metadata:
-  name: {{ .Values.paymentService.name }}
+  name: {{ .Values.paymentservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   workloadSelector:
     labels:
-      app: {{ .Values.paymentService.name }}
+      app: {{ .Values.paymentservice.name }}
   egress:
   - hosts:
     - istio-system/*
@@ -159,18 +159,18 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: {{ .Values.paymentService.name }}
+  name: {{ .Values.paymentservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.paymentService.name }}
+      app: {{ .Values.paymentservice.name }}
   rules:
   - from:
     - source:
         principals:
         {{- if .Values.serviceAccounts.create }}
-        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.checkoutService.name }}
+        - cluster.local/ns/{{ .Release.Namespace }}/sa/{{ .Values.checkoutservice.name }}
         {{- else }}
         - cluster.local/ns/{{ .Release.Namespace }}/sa/default
         {{- end }}

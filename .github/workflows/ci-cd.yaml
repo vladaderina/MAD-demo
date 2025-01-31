@@ -36,6 +36,14 @@ jobs:
             fi
           done
 
+      - name: Tags owerrides
+        run: |
+          for service in ${{ steps.changed-services.outputs.services }}; do
+            if [ -d "src/$service" ]; then
+              yq -i '.Values.$service.tag="$GITHUB_SHA"' values.yaml
+            fi
+          done
+
       - name: Deploy to Kubernetes
         run: |
-          helm upgrade --kubeconfig ~/.kube/kubeconfig-github my-microservices ./helm/ 
+          helm upgrade --kubeconfig ~/.kube/kubeconfig-github my-microservices ./helm/ --values tags.yaml

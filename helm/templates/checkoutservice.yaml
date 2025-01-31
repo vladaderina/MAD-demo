@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{{- if .Values.checkoutService.create }}
+{{- if .Values.checkoutservice.create }}
 {{- if .Values.serviceAccounts.create }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Values.checkoutService.name }}
+  name: {{ .Values.checkoutservice.name }}
   namespace: {{.Release.Namespace}}
   {{- if not .Values.serviceAccounts.annotationsOnlyForCartservice }}
   {{- with .Values.serviceAccounts.annotations }}
@@ -30,21 +30,21 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.checkoutService.name }}
+  name: {{ .Values.checkoutservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.checkoutService.name }}
+    app: {{ .Values.checkoutservice.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.checkoutService.name }}
+      app: {{ .Values.checkoutservice.name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.checkoutService.name }}
+        app: {{ .Values.checkoutservice.name }}
     spec:
       {{- if .Values.serviceAccounts.create }}
-      serviceAccountName: {{ .Values.checkoutService.name }}
+      serviceAccountName: {{ .Values.checkoutservice.name }}
       {{- else }}
       serviceAccountName: default
       {{- end }}
@@ -68,7 +68,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: {{ .Values.images.repository }}/{{ .Values.checkoutService.name }}:{{ .Values.images.tag | default "latest" }}
+        image: {{ .Values.images.repository }}/{{ .Values.checkoutservice.name }}:{{ .Values.checkoutservice.tag | default "latest" }}
         ports:
         - containerPort: 5050
         readinessProbe:
@@ -81,22 +81,22 @@ spec:
         - name: PORT
           value: "5050"
         - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: "{{ .Values.productCatalogService.name }}:3550"
+          value: "{{ .Values.productcatalogservice.name }}:3550"
         - name: SHIPPING_SERVICE_ADDR
-          value: "{{ .Values.shippingService.name }}:50051"
+          value: "{{ .Values.shippingservice.name }}:50051"
         - name: PAYMENT_SERVICE_ADDR
-          value: "{{ .Values.paymentService.name }}:50051"
+          value: "{{ .Values.paymentservice.name }}:50051"
         - name: EMAIL_SERVICE_ADDR
-          value: "{{ .Values.emailService.name }}:5000"
+          value: "{{ .Values.emailservice.name }}:5000"
         - name: CURRENCY_SERVICE_ADDR
-          value: "{{ .Values.currencyService.name }}:7000"
+          value: "{{ .Values.currencyservice.name }}:7000"
         - name: CART_SERVICE_ADDR
-          value: "{{ .Values.cartService.name }}:7070"
+          value: "{{ .Values.cartservice.name }}:7070"
         {{- if .Values.opentelemetryCollector.create }}
         - name: COLLECTOR_SERVICE_ADDR
           value: "{{ .Values.opentelemetryCollector.name }}:4317"
         - name: OTEL_SERVICE_NAME
-          value: "{{ .Values.checkoutService.name }}"
+          value: "{{ .Values.checkoutservice.name }}"
         {{- end }}
         {{- if .Values.googleCloudOperations.tracing }}
         - name: ENABLE_TRACING
@@ -107,19 +107,19 @@ spec:
           value: "1"
         {{- end }}
         resources:
-          {{- toYaml .Values.checkoutService.resources | nindent 10 }}
+          {{- toYaml .Values.checkoutservice.resources | nindent 10 }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.checkoutService.name }}
+  name: {{ .Values.checkoutservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.checkoutService.name }}
+    app: {{ .Values.checkoutservice.name }}
 spec:
   type: ClusterIP
   selector:
-    app: {{ .Values.checkoutService.name }}
+    app: {{ .Values.checkoutservice.name }}
   ports:
   - name: grpc
     port: 5050
@@ -129,12 +129,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Values.checkoutService.name }}
+  name: {{ .Values.checkoutservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: {{ .Values.checkoutService.name }}
+      app: {{ .Values.checkoutservice.name }}
   policyTypes:
   - Ingress
   - Egress
@@ -154,21 +154,21 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: Sidecar
 metadata:
-  name: {{ .Values.checkoutService.name }}
+  name: {{ .Values.checkoutservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   workloadSelector:
     labels:
-      app: {{ .Values.checkoutService.name }}
+      app: {{ .Values.checkoutservice.name }}
   egress:
   - hosts:
     - istio-system/*
-    - ./{{ .Values.cartService.name }}.{{ .Release.Namespace }}.svc.cluster.local
-    - ./{{ .Values.currencyService.name }}.{{ .Release.Namespace }}.svc.cluster.local
-    - ./{{ .Values.emailService.name }}.{{ .Release.Namespace }}.svc.cluster.local
-    - ./{{ .Values.paymentService.name }}.{{ .Release.Namespace }}.svc.cluster.local
-    - ./{{ .Values.productCatalogService.name }}.{{ .Release.Namespace }}.svc.cluster.local
-    - ./{{ .Values.shippingService.name }}.{{ .Release.Namespace }}.svc.cluster.local
+    - ./{{ .Values.cartservice.name }}.{{ .Release.Namespace }}.svc.cluster.local
+    - ./{{ .Values.currencyservice.name }}.{{ .Release.Namespace }}.svc.cluster.local
+    - ./{{ .Values.emailservice.name }}.{{ .Release.Namespace }}.svc.cluster.local
+    - ./{{ .Values.paymentservice.name }}.{{ .Release.Namespace }}.svc.cluster.local
+    - ./{{ .Values.productcatalogservice.name }}.{{ .Release.Namespace }}.svc.cluster.local
+    - ./{{ .Values.shippingservice.name }}.{{ .Release.Namespace }}.svc.cluster.local
     {{- if .Values.opentelemetryCollector.create }}
     - ./{{ .Values.opentelemetryCollector.name }}.{{ .Release.Namespace }}.svc.cluster.local
     {{- end }}
@@ -178,12 +178,12 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: {{ .Values.checkoutService.name }}
+  name: {{ .Values.checkoutservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.checkoutService.name }}
+      app: {{ .Values.checkoutservice.name }}
   rules:
   - from:
     - source:

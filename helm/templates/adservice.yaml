@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{{- if .Values.adService.create }}
+{{- if .Values.adservice.create }}
 {{- if .Values.serviceAccounts.create }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Values.adService.name }}
+  name: {{ .Values.adservice.name }}
   namespace: {{.Release.Namespace}}
   {{- if not .Values.serviceAccounts.annotationsOnlyForCartservice }}
   {{- with .Values.serviceAccounts.annotations }}
@@ -30,21 +30,21 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.adService.name }}
+  name: {{ .Values.adservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.adService.name }}
+    app: {{ .Values.adservice.name }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.adService.name }}
+      app: {{ .Values.adservice.name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.adService.name }}
+        app: {{ .Values.adservice.name }}
     spec:
       {{- if .Values.serviceAccounts.create }}
-      serviceAccountName: {{ .Values.adService.name }}
+      serviceAccountName: {{ .Values.adservice.name }}
       {{- else }}
       serviceAccountName: default
       {{- end }}
@@ -69,14 +69,14 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: {{ .Values.images.repository }}/{{ .Values.adService.name }}:{{ .Values.images.tag | default "latest" }}
+        image: {{ .Values.images.repository }}/{{ .Values.adservice.name }}:{{ .Values.adservice.tag | default "latest" }}
         ports:
         - containerPort: 9555
         env:
         - name: PORT
           value: "9555"
         resources:
-          {{- toYaml .Values.adService.resources | nindent 10 }}
+          {{- toYaml .Values.adservice.resources | nindent 10 }}
         readinessProbe:
           initialDelaySeconds: 20
           periodSeconds: 15
@@ -91,14 +91,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.adService.name }}
+  name: {{ .Values.adservice.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Values.adService.name }}
+    app: {{ .Values.adservice.name }}
 spec:
   type: ClusterIP
   selector:
-    app: {{ .Values.adService.name }}
+    app: {{ .Values.adservice.name }}
   ports:
   - name: grpc
     port: 9555
@@ -108,12 +108,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Values.adService.name }}
+  name: {{ .Values.adservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app: {{ .Values.adService.name }}
+      app: {{ .Values.adservice.name }}
   policyTypes:
   - Ingress
   - Egress
@@ -133,12 +133,12 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: Sidecar
 metadata:
-  name: {{ .Values.adService.name }}
+  name: {{ .Values.adservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   workloadSelector:
     labels:
-      app: {{ .Values.adService.name }}
+      app: {{ .Values.adservice.name }}
   egress:
   - hosts:
     - istio-system/*
@@ -151,12 +151,12 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: {{ .Values.adService.name }}
+  name: {{ .Values.adservice.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.adService.name }}
+      app: {{ .Values.adservice.name }}
   rules:
   - from:
     - source:

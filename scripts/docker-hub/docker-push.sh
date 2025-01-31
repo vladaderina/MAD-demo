@@ -1,5 +1,8 @@
 #!/bin/sh
 
+docker build -t vladaderina/adservice:latest ./src/adservice/
+docker push vladaderina/adservice:latest
+
 docker build -t vladaderina/checkoutservice:latest ./src/checkoutservice/
 docker push vladaderina/checkoutservice:latest
 

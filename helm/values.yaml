@@ -19,7 +19,6 @@
 images:
   repository: vladaderina
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
 
 serviceAccounts:
   # Specifies whether service accounts should be created.
@@ -59,7 +58,7 @@ seccompProfile:
 securityContext:
   enable: true
 
-adService:
+adservice:
   create: true
   name: adservice
   resources:
@@ -69,8 +68,9 @@ adService:
     limits:
       cpu: 300m
       memory: 300Mi
+  tag: ""
 
-cartService:
+cartservice:
   create: true
   name: cartservice
   resources:
@@ -80,8 +80,9 @@ cartService:
     limits:
       cpu: 300m
       memory: 128Mi
+  tag: ""
 
-checkoutService:
+checkoutservice:
   create: true
   name: checkoutservice
   resources:
@@ -91,8 +92,9 @@ checkoutService:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
-currencyService:
+:
   create: true
   name: currencyservice
   resources:
@@ -102,8 +104,9 @@ currencyService:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
-emailService:
+:
   create: true
   name: emailservice
   resources:
@@ -113,6 +116,7 @@ emailService:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
 frontend:
   create: true
@@ -138,8 +142,9 @@ frontend:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
-loadGenerator:
+loadgenerator:
   create: true
   name: loadgenerator
   checkFrontendInitContainer: true
@@ -150,8 +155,9 @@ loadGenerator:
     limits:
       cpu: 500m
       memory: 512Mi
+  tag: ""
 
-paymentService:
+paymentservice:
   create: true
   name: paymentservice
   resources:
@@ -161,8 +167,9 @@ paymentService:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
-productCatalogService:
+productcatalogservice:
   create: true
   name: productcatalogservice
   # Specifies an extra latency to any request on productcatalogservice, by default no extra latency.
@@ -174,8 +181,9 @@ productCatalogService:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
-recommendationService:
+recommendationservice:
   create: true
   name: recommendationservice
   resources:
@@ -185,8 +193,9 @@ recommendationService:
     limits:
       cpu: 200m
       memory: 450Mi
+  tag: ""
 
-shippingService:
+shippingservice:
   create: true
   name: shippingservice
   resources:
@@ -196,6 +205,7 @@ shippingService:
     limits:
       cpu: 200m
       memory: 128Mi
+  tag: ""
 
 cartDatabase:
   # Specifies the type of the cartservice's database, could be either redis or spanner.
@@ -212,9 +222,11 @@ cartDatabase:
     endpointAddress: ""
     endpointPort: ""
     certificate: ""
+tag: ""
 
 # @TODO: This service is not currently available in Helm.
 # https://github.com/GoogleCloudPlatform/microservices-demo/tree/main/kustomize/components/shopping-assistant
 shoppingAssistantService:
   create: false
   name: shoppingassistantservice
+tag: ""

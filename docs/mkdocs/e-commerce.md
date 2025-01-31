@@ -94,7 +94,7 @@ Network Destination        Netmask          Gateway       Interface         Metr
 ```
 route add 192.168.0.0 mask 255.255.0.0 192.168.75.11
 ```
-Теперь вывод **route print** показал две записи:
+Теперь вывод `route print` показал две записи:
 ```
 Network Destination        Netmask          Gateway       Interface         Metric
 192.168.0.0                255.255.0.0      On-link       192.168.75.123     26
@@ -138,6 +138,10 @@ sudo sysctl -p
 ![alt text](images/image-2.png)
 
 В поисках проблемы, проверяем таблицу маршрутизации на сервере:
+
+```
+ip route
+```
 
 ![alt text](images/image-3.png)
 
