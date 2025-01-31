@@ -18,7 +18,7 @@ jobs:
         id: changed-services
         run: |
           changed_files=$(git diff --name-only HEAD^ HEAD)
-          services=$(echo "$changed_files" | awk -F/ '{print $1}' | sort | uniq)
+          services=$(echo "$changed_files" | awk -F/ 'NF >= 3 {print $2}' | sort | uniq)
           echo $services
           echo "services=$(echo $services | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
