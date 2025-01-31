@@ -24,7 +24,7 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          for service in ${{ steps.changed-services.outputs.services }}"; do
+          for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
               docker build -t ${{ env.DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
               docker login -u ${{ env.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_TOKEN }}
