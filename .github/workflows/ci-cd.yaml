@@ -9,6 +9,10 @@ jobs:
   build-and-deploy:
     runs-on: self-hosted
     environment: minikube
+    env: 
+      DOCKER_HUB_USERNAME: ${{ env.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,13 +31,13 @@ jobs:
         run: |
           for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
-              docker build -t ${{ env.DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
-              docker login -u ${{ env.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_TOKEN }}
-              docker push ${{ env.DOCKER_HUB_USERNAME }}/$service:latest
+              docker build -t ${{ DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
+              docker login -u ${{ DOCKER_HUB_USERNAME }} -p ${{ DOCKER_HUB_TOKEN }}
+              docker push ${{ DOCKER_HUB_USERNAME }}/$service:latest
             fi
           done
 
       - name: Deploy to Kubernetes
         run: |
           helm upgrade my-microservices ./helm/ \
-            --kubeconfig ${{ secrets.KUBE_CONFIG }}
+            --kubeconfig ${{ KUBE_CONFIG }}
