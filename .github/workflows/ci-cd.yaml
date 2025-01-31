@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: self-hosted
+    environment: minikube
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -35,4 +36,4 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           helm upgrade my-microservices ./helm/ \
-            --kubeconfig ~/.kube/kubeconfig-github
+            --kubeconfig ${{ secrets.KUBE_CONFIG }}
