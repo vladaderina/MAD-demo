@@ -8,11 +8,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: self-hosted
-    environment: minikube
-    env: 
-      DOCKER_HUB_USERNAME: ${{ env.DOCKER_HUB_USERNAME }}
-      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
