@@ -35,4 +35,4 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           helm upgrade my-microservices ./helm/ \
-            --kubeconfig ${{ KUBE_CONFIG }}
+            --kubeconfig $KUBE_CONFIG
