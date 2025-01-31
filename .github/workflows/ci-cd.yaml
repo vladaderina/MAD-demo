@@ -30,9 +30,9 @@ jobs:
         run: |
           for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
-              docker build -t ${{ env.DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
+              docker build -t ${{ env.DOCKER_HUB_USERNAME }}/$service:$GITHUB_SHA ./src/$service
               docker login -u ${{ env.DOCKER_HUB_USERNAME }} -p ${{ env.DOCKER_HUB_TOKEN }}
-              docker push ${{ env.DOCKER_HUB_USERNAME }}/$service:latest
+              docker push ${{ env.DOCKER_HUB_USERNAME }}/$service:$GITHUB_SHA
             fi
           done
 
