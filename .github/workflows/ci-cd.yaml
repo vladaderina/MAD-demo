@@ -31,9 +31,9 @@ jobs:
         run: |
           for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
-              docker build -t ${{ DOCKER_HUB_USERNAME }}/$service:latest ./src/$service
-              docker login -u ${{ DOCKER_HUB_USERNAME }} -p ${{ DOCKER_HUB_TOKEN }}
-              docker push ${{ DOCKER_HUB_USERNAME }}/$service:latest
+              docker build -t $DOCKER_HUB_USERNAME/$service:latest ./src/$service
+              docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_TOKEN
+              docker push $DOCKER_HUB_USERNAME/$service:latest
             fi
           done
 
