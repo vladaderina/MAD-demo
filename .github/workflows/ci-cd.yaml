@@ -54,7 +54,13 @@ jobs:
             fi
           done
 
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --quiet || echo "changes=true" >> $GITHUB_ENV
+
       - name: Commit and push changes
+        if: env.changes == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -68,4 +74,4 @@ jobs:
     steps:        
       - name: Deploy to Kubernetes
         run: |
-          helm upgrade --values tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m my-microservices ./helm/
+          helm upgrade --values ./helm/tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m my-microservices ./helm/
