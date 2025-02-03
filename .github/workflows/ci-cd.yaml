@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/ci-cd.yaml'
       - 'helm/**'
       - '!helm/tags.yaml'
       - 'src/**'
