@@ -30,7 +30,7 @@ jobs:
       - name: Get changed services
         id: changed-services
         run: |
-          for file in ${{ steps.changed-services.outputs.files }}; do
+          for file in ${{ steps.changed-services.outputs.all_changed_files }}; do
             if [ -d "src/$file }}" ]; then
               echo "services=$(echo "$file" | awk -F'/' '{print $1}' | sort -u)" >> $GITHUB_OUTPUT
             fi
