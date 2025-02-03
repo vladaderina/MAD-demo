@@ -1,38 +1,26 @@
 adservice:
   tag: "latest"
-
 cartservice:
   tag: "latest"
-
 checkoutservice:
   tag: "latest"
-
 currencyservice:
   tag: "latest"
-
 emailservice:
   tag: "latest"
-
 frontend:
-  tag: "latest"
-
+  tag: "cf5ef542c95ec5169735f4426970d198610142f0"
 loadgenerator:
   tag: "latest"
-
 paymentservice:
   tag: "latest"
-
 productcatalogservice:
   tag: "latest"
-
 recommendationservice:
   tag: "latest"
-
 shippingservice:
   tag: "latest"
-
 cartDatabase:
   tag: "latest"
-
 shoppingAssistantService:
   tag: "latest"
