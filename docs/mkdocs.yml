@@ -20,6 +20,7 @@ theme:
 nav:
   - Описание: index.md
   - Теория:
+    - Reverse engineering приложения "E-commerce": e-commerce-theory.md
     - Метрики: metrics.md
     - Основные метрики для мониторинга состояния кластера: metrics_types.md
     - Архитектура HA кластера: architecture.md
@@ -28,7 +29,7 @@ nav:
     - Автоматизированное развертывание K8s: k8s-deploy.md
   - Практика:
       - Установка minikube: minikube.md
-      - Развертывание микросервисного приложения: e-commerce.md
+      - Развертывание приложения "E-commerce": e-commerce-build.md
       - CI/CD: ci-cd.md
       - Сбор метрик: 
         - Метрики kubernetes: control-plane-metrics.md

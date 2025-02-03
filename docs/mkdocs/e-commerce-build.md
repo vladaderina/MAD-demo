@@ -1,6 +1,6 @@
-## Сбор метрик с микросервисного приложения
+В проекте было использовано демонстрационное приложение ["E-commerce"](https://github.com/GoogleCloudPlatform/microservices-demo).
 
-В проекте было использовано демонстрационное приложение [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo).
+Подробнее о логике работы приложения на странице: [Reverse engineering приложения "E-commerce"](https://vladaderina.github.io/KubeAnomaly/e-commerce-theory/).
 
 ![alt text](images/e-commerce-scheme.png)
 

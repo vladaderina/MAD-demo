@@ -4,27 +4,36 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'helm/**'
+      - '!helm/tags.yaml'
+      - 'src/**'
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: self-hosted
     environment: minikube
     env: 
       DOCKER_HUB_USERNAME: ${{ vars.DOCKER_HUB_USERNAME }} 
       DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-    steps:
+    steps:        
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
-      - name: Detect changed services
+      - name: Get changed files
+          id: changed-files
+          uses: tj-actions/changed-files@v40
+  
+      - name: Get changed services
         id: changed-services
         run: |
-          changed_files=$(git diff --name-only HEAD^ HEAD)
-          services=$(echo "$changed_files" | awk -F/ 'NF >= 3 {print $2}' | sort | uniq)
-          echo $services
-          echo "services=$(echo $services | tr '\n' ' ')" >> $GITHUB_OUTPUT
+          for file in ${{ steps.changed-services.outputs.files }}; do
+            if [ -d "src/$file }}" ]; then
+              echo "services=$(echo "$file" | awk -F'/' '{print $1}' | sort -u)" >> $GITHUB_OUTPUT
+            fi
+          done
 
       - name: Build and push Docker images
         run: |
@@ -40,10 +49,22 @@ jobs:
         run: |
           for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
-              yq -i ".${service}.tag = \"${GITHUB_SHA}\"" ./helm/values.yaml
+              yq -i ".${service}.tag = \"${GITHUB_SHA}\"" ./helm/tags.yaml
             fi
           done
 
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add .
+          git commit -m "Update tags.yaml" || echo "No changes to commit"
+          git push
+
+  deploy:
+    runs-on: self-hosted
+    steps:        
       - name: Deploy to Kubernetes
         run: |
-          helm upgrade --kubeconfig ~/.kube/kubeconfig-github my-microservices ./helm/
+          helm upgrade --values tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m my-microservices ./helm/
