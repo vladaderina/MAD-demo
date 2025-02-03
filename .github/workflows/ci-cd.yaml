@@ -32,7 +32,7 @@ jobs:
         run: |
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             dir=$(echo "$file" | awk -F'/' '{print $2}' | sort -u)
-            if [ -d "src/$dir }}" ]; then
+            if [ -d "src/$dir" ]; then
               echo "services=$dir" >> $GITHUB_OUTPUT
             fi
           done
