@@ -2,7 +2,7 @@
 
 ### Установка библиотеки с чартом
 
-Для скачивания чарта нужен доступ к публичному DNS серверу. На сервере в файл /etc/resolv.conf были добавлены строки:
+Для скачивания чарта нужен доступ к публичному DNS серверу. На сервере в файл /etc/resolv.conf были сначала добавлены строки:
 
 ```
 nameserver 8.8.8.8
@@ -14,7 +14,39 @@ nameserver 8.8.4.4
 ```
 sudo ip route add default via 192.168.75.1 dev enp2s0
 ```
+
 ![alt text](image-2.png)
+
+Но так как данные перетирались, то была установлена утилита `resolvconf` для персистентности данных с DNS сервером:
+
+```
+apt install resolvconf
+```
+
+```
+echo "nameserver 8.8.8.8" | sudo resolvconf -a enp2s0
+```
+
+А для сохранения настроек маршрута был отредактирован файл:
+
+```
+sudo nano /etc/netplan/50-cloud-init.yaml
+```
+
+```
+network:
+  version: 2
+  ethernets:
+    enp2s0:
+      dhcp4: no
+      addresses:
+        - 192.168.75.100/24   # Укажи свой IP-адрес
+      gateway4: 192.168.75.1  # Default gateway
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 1.1.1.1
+```
 
 Команда по добавлению библиотеки с чартом:
 
