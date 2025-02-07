@@ -1,1 +1,4 @@
 venv
+helm/monitoring/charts
+helm/monitoring/.helmignore
+helm/monitoring/Chart.lock
