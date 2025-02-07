@@ -1,0 +1,10 @@
+apiVersion: v2
+name: storage
+description: A Helm chart for storage
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: postgresql
+    version: "16.4.6"
+    repository: oci://registry-1.docker.io/bitnamicharts
