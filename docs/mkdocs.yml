@@ -32,6 +32,7 @@ nav:
         - Приложение "E-commerce": e-commerce-deploy.md
         - Система мониторинга: vm-deploy.md
         - Хранилище: db-deploy.md
+      - Terraform: terraform.md
       - Сбор метрик: 
         - Метрики kubernetes: control-plane-metrics.md
         - Istio: istio.md
