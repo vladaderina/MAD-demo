@@ -28,3 +28,20 @@ terraform {
   }
 }
 ```
+
+### Запуск Terraform
+
+Перед запуском нужно установить переменные окружения
+
+```
+export TF_VAR_postgres_password="postgres"
+export TF_VAR_grafana_db_password="grafana"
+```
+
+Далее выполнить команды
+
+```
+terraform init
+terraform plan
+terraform apply
+```

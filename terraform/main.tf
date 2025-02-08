@@ -8,10 +8,10 @@ terraform {
 }
 
 provider "postgresql" {
-  host     = "192.168.39.24"
-  port     = 30000                        
-  username = "postgres"
-  password = "postgres"
+  host     = var.postgres_host
+  port     = var.postgres_port                        
+  username = var.postgres_user
+  password = var.postgres_password
   database = "postgres"
   sslmode  = "disable"
 }
@@ -22,7 +22,7 @@ resource "postgresql_database" "grafana" {
 
 resource "postgresql_role" "grafana_user" {
   name     = "grafana"
-  password = "grafana"
+  password = var.grafana_db_password
   login    = true
   superuser = false
 }
