@@ -3,7 +3,7 @@ victoria-metrics-k8s-stack:
     enabled: true
 
   vmcluster:
-  enabled: false
+    enabled: false
 
   defaultRules:
     create: false
@@ -34,3 +34,19 @@ victoria-metrics-k8s-stack:
 
   kubeProxy:
     enabled: false
+  
+  grafana:
+    extraSecretMounts:
+    - name: postgres-db-mount
+      secretName: postgres-db-password
+      defaultMode: 0440
+      mountPath: /etc/secrets/postgres
+      readOnly: true
+    grafana.ini:
+      database:
+        type: postgres
+        host: postgres-postgresql-0.postgres-postgresql-hl.default.svc.cluster.local
+        name: grafana
+        user: grafana
+        password: $__file{/etc/secrets/postgres/password}
+        ssl_mode: disable
