@@ -33,3 +33,20 @@ resource "postgresql_grant" "grafana_grant" {
   object_type = "database"
   privileges  = ["ALL"]
 }
+
+resource "postgresql_default_privileges" "grant_all_tables" {
+  owner      = "pg_database_owner"
+  role       = postgresql_role.grafana_user.name
+  database   = postgresql_database.grafana.name
+  schema     = "public"
+  object_type = "table"
+  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
+}
+
+resource "postgresql_grant" "grant_create_on_schema" {
+  role = "grafana"
+  database  = "grafana"
+  schema    = "public"
+  object_type = "schema"
+  privileges = ["CREATE"]
+}
