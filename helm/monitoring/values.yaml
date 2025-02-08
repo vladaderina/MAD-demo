@@ -1,4 +1,4 @@
-victoria-metrics-k8s-stack:
+stack:
   vmsingle:
     enabled: true
 
@@ -36,6 +36,7 @@ victoria-metrics-k8s-stack:
     enabled: false
   
   grafana:
+    dbPass: ""
     extraSecretMounts:
     - name: postgres-db-mount
       secretName: postgres-db-password
@@ -45,7 +46,7 @@ victoria-metrics-k8s-stack:
     grafana.ini:
       database:
         type: postgres
-        host: postgres-postgresql-0.postgres-postgresql-hl.default.svc.cluster.local
+        host: postgres-postgresql-0.postgres-postgresql-hl.storage.svc.cluster.local
         name: grafana
         user: grafana
         password: $__file{/etc/secrets/postgres/password}
