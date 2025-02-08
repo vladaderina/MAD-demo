@@ -1,11 +1,11 @@
 variable "postgres_port" {
-  description = "Порт подключения к PostgreSQL"
+  description = "Port PostgreSQL"
   type        = number
-  default     = 30000  # Укажите порт по умолчанию, если нужно
+  default     = 30000
 }
 
 variable "postgres_host" {
-  description = "Хост PostgreSQL"
+  description = "Host PostgreSQL"
   type        = string
   default     = "192.168.39.24"
 }

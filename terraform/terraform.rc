@@ -3,12 +3,7 @@ provider_installation {
     path    = ".terraform.d/plugins"
     include = ["registry.terraform.io/local/*"]
   }
-  network_mirror {
-    url = "https://terraform-mirror.yandexcloud.net/"
-    include = ["registry.terraform.io/hashicorp/*"]
-  }
   direct {
-    exclude = ["registry.terraform.io/hashicorp/*"]
     exclude = ["registry.terraform.io/local/*"]
   }
 }
