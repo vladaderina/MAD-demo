@@ -38,7 +38,7 @@ stack:
   grafana:
     sercive:
       type: NodePort
-      nodePort: 30300 
+      nodePort: 30300
     dbPass: ""
     extraSecretMounts:
       - name: postgres-db-mount
