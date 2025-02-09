@@ -28,7 +28,6 @@ stack:
 
   kubeEtcd:
     enabled: false
-
   kubeScheduler:
     enabled: false
 
