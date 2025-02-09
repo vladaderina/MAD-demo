@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - main
+      - pipeline
     paths:
       - '.github/workflows/ci-cd.yaml'
       - 'helm/**'
-      - '!helm/tags.yaml'
+      - '!helm/product/tags.yaml'
       - 'src/**'
 
 jobs:
@@ -75,7 +76,27 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
-    steps:        
-      - name: Deploy to Kubernetes
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            product:
+              - 'helm/product/**'
+              - 'src/**'
+            monitoring:
+              - 'helm/monitoring/**'
+            srotage:
+              - 'helm/storage/**'
+      - name: Deploy Product to Kubernetes
+        if: steps.changes.outputs.product == 'true'
         run: |
-          helm upgrade --values ./helm/tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m my-microservices ./helm/
+          helm upgrade --values ./helm/product/tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n product e-commerce ./helm/product
+      - name: Deploy Monitoring to Kubernetes
+        if: steps.changes.outputs.monitoring == 'true'
+        run: |
+          helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n monitoring --set stack.grafana.dbPass="grafana" monitoring ./helm/monitoring
+      - name: Deploy Storage to Kubernetes
+        if: steps.changes.outputs.srotage == 'true'
+        run: |
+          helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n storage postgres ./helm/storage

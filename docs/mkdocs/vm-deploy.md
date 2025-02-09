@@ -40,8 +40,8 @@ network:
     enp2s0:
       dhcp4: no
       addresses:
-        - 192.168.75.100/24   # Укажи свой IP-адрес
-      gateway4: 192.168.75.1  # Default gateway
+        - 192.168.75.11/24
+      gateway4: 192.168.75.1
       nameservers:
         addresses:
           - 8.8.8.8
