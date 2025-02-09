@@ -35,6 +35,7 @@ stack:
     enabled: false
   
   grafana:
+    adminPassword: password
     service:
       type: "NodePort"
       nodePort: 30300
