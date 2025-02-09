@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - pipeline
+      - monitoring
+      - storage
     paths:
       - '.github/workflows/ci-cd.yaml'
       - 'helm/**'
