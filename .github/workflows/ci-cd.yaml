@@ -104,4 +104,4 @@ jobs:
         if: steps.changes.outputs.srotage == 'true'
         run: |
           helm dependency build ./helm/storage
-          helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n storage postgres ./helm/storage
+          helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n storage postgres ./helm/storage 
