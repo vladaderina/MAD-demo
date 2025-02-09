@@ -35,8 +35,8 @@ stack:
     enabled: false
   
   grafana:
-    sercive:
-      type: NodePort
+    service:
+      type: "NodePort"
       nodePort: 30300
     dbPass: ""
     extraSecretMounts:
