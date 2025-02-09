@@ -2,3 +2,8 @@ venv
 helm/monitoring/charts
 helm/monitoring/.helmignore
 helm/monitoring/Chart.lock
+terraform/terraform.tfstate.backup
+terraform/terraform.tfstate
+terraform/.terraform.lock.hcl
+terraform/.terraform.d/
+terraform/.terraform/
