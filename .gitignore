@@ -1,6 +1,4 @@
 venv
-terraform/terraform.tfstate.backup
-terraform/terraform.tfstate
-terraform/.terraform.lock.hcl
-terraform/.terraform.d/
-terraform/.terraform/
+helm/storage/charts
+helm/storage/.helmignore
+helm/storage/Chart.lock
