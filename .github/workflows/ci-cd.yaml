@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - pipeline
+      - pipeline 
       - monitoring
       - storage
     paths:
@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 2
+          ref: ${{ github.ref_name }}
 
       - name: Get changed files
         id: changed-files
@@ -97,10 +98,10 @@ jobs:
       - name: Deploy Monitoring to Kubernetes
         if: steps.changes.outputs.monitoring == 'true'
         run: |
-          helm dependency build
+          helm dependency build ./helm/monitoring
           helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n monitoring --set stack.grafana.dbPass="grafana" monitoring ./helm/monitoring
       - name: Deploy Storage to Kubernetes
         if: steps.changes.outputs.srotage == 'true'
         run: |
-          helm dependency build
-          helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n storage postgres ./helm/storage
+          helm dependency build ./helm/storage
+          helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n storage postgres ./helm/storage 

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: monitoring
+description: A Helm chart for monitoring
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: victoria-metrics-k8s-stack
+    alias: stack
+    version: "0.33.5"
+    repository: https://victoriametrics.github.io/helm-charts
