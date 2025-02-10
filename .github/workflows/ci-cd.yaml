@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - pipeline
+      - monitoring
+      - storage
     paths:
       - '.github/workflows/ci-cd.yaml'
       - 'helm/**'
@@ -95,8 +97,10 @@ jobs:
       - name: Deploy Monitoring to Kubernetes
         if: steps.changes.outputs.monitoring == 'true'
         run: |
+          helm dependency build
           helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n monitoring --set stack.grafana.dbPass="grafana" monitoring ./helm/monitoring
       - name: Deploy Storage to Kubernetes
         if: steps.changes.outputs.srotage == 'true'
         run: |
+          helm dependency build
           helm upgrade --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n storage postgres ./helm/storage
