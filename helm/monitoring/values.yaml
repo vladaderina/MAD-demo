@@ -35,7 +35,7 @@ stack:
     enabled: false
   
   grafana:
-    adminPassword: password
+    adminPassword: admin
     service:
       type: "NodePort"
       nodePort: 30300
@@ -49,7 +49,7 @@ stack:
     grafana.ini:
       database:
         type: postgres
-        host: postgres-postgresql-0.postgres-postgresql-hl.storage.svc.cluster.local
+        host: storage-postgresql-0.storage-postgresql-hl.storage.svc.cluster.local
         name: grafana
         user: grafana
         password: $__file{/etc/secrets/postgres/password}
