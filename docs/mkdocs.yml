@@ -34,8 +34,8 @@ nav:
         - Хранилище: db-deploy.md
       - Terraform: terraform.md
       - Сбор метрик: 
-        - Метрики kubernetes: control-plane-metrics.md
         - Istio: istio.md
+        - Метрики kubernetes: control-plane-metrics.md
       - CI/CD: ci-cd.md
       - Анализ аномалий: 
         - Сontrol plane: breakdown1.md
