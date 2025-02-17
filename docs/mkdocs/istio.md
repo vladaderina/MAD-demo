@@ -122,29 +122,32 @@ curl http://localhost:15014/metrics
 
 ```
 apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMServiceScrape
+kind: VMScrapeConfig
 metadata:
-  name: istio-mesh-scrape
+  name: istio-metrics
   namespace: monitoring
-  labels:
-    app: istio-mesh
-    component: metrics
 spec:
-  endpoints:
-    - port: "15014"
-      path: /metrics
-      interval: 15s
-      scheme: http
-      targetPort: 15014
-  selector:
-    matchLabels:
-      app: istiod
-      release: istio
-  namespaceSelector:
-    matchNames:
-      - istio-system
+  jobName: istio
+  kubernetes_sd_configs:
+    - role: endpoints
+      namespaces:
+        names:
+          - istio-system
+  relabelConfigs:
+    - sourceLabels: [__meta_kubernetes_service_label_istio]
+      action: keep
+      regex: pilot|envoy
+    - sourceLabels: [__meta_kubernetes_endpoint_address_target_kind]
+      action: keep
+      regex: Pod
+    - sourceLabels: [__meta_kubernetes_endpoint_address_target_name]
+      targetLabel: pod_name
+    - sourceLabels: [__meta_kubernetes_namespace]
+      targetLabel: namespace
 ```
 
-kubectl run -n monitoring -it --rm --image=busybox dns-test -- nslookup istiod.istio-system.svc.cluster.local
-
-kubectl run -n monitoring -it --rm --image=curlimages/curl curl-test -- curl http://istiod.istio-system.svc.cluster.local:15014/metrics
+!!! note "Полезные команды"
+  1. Проверка DNS-резолвинга из другого namespace:
+  kubectl run -n monitoring -it --rm --image=busybox dns-test -- nslookup istiod.istio-system.svc.cluster.local
+  2. Проверка доступности через curl из другого namespace:
+  kubectl run -n monitoring -it --rm --image=curlimages/curl curl-test -- curl http://istiod.istio-system.svc.cluster.local:15014/metrics
