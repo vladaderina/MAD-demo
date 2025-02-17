@@ -5,16 +5,28 @@ metadata:
   namespace: monitoring
 spec:
   kubernetesSDConfigs:
-    - role: endpoints
-      namespaces:
-        names:
-          - istio-system
+  - role: endpoints
+    namespaces:
+      names:
+        - istio-system
   relabelConfigs:
-    - sourceLabels: [__meta_kubernetes_service_name]
+    - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name, __meta_kubernetes_namespace]
       action: keep
-      regex: istiod
-    - sourceLabels: [__meta_kubernetes_endpoint_port_name]
+      regex: istiod;http-monitoring;istio-system
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: istio-sidecar-metrics
+  namespace: monitoring
+spec:
+  path: /stats/prometheus
+  kubernetesSDConfigs:
+  - role: pod
+    namespaces:
+      names:
+        - product
+  relabelConfigs:
+    - source_labels: [__meta_kubernetes_pod_container_port_name]
       action: keep
-      regex: http-monitoring
-    - sourceLabels: [__meta_kubernetes_namespace]
-      targetLabel: istio-system
+      regex: '.*-envoy-prom'

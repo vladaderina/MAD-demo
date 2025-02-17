@@ -128,23 +128,45 @@ metadata:
   namespace: monitoring
 spec:
   kubernetesSDConfigs:
-    - role: endpoints
-      namespaces:
-        names:
-          - istio-system
+  - role: endpoints
+    namespaces:
+      names:
+        - istio-system
   relabelConfigs:
-    - sourceLabels: [__meta_kubernetes_service_name]
+    - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name, __meta_kubernetes_namespace]
       action: keep
-      regex: istiod
-    - sourceLabels: [__meta_kubernetes_endpoint_port_name]
+      regex: istiod;http-monitoring;istio-system
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: istio-sidecar-metrics
+  namespace: monitoring
+spec:
+  path: /stats/prometheus
+  kubernetesSDConfigs:
+  - role: pod
+    namespaces:
+      names:
+        - product
+  relabelConfigs:
+    - source_labels: [__meta_kubernetes_pod_container_port_name]
       action: keep
-      regex: http-monitoring
-    - sourceLabels: [__meta_kubernetes_namespace]
-      targetLabel: istio-system
+      regex: '.*-envoy-prom'
 ```
+
+Теперь у VM появились таргеты:
+
+![alt text](image-10.png)
 
 !!! note "Полезные команды"
   1. Проверка DNS-резолвинга из другого namespace:
   kubectl run -n monitoring -it --rm --image=busybox dns-test -- nslookup istiod.istio-system.svc.cluster.local
   2. Проверка доступности через curl из другого namespace:
   kubectl run -n monitoring -it --rm --image=curlimages/curl curl-test -- curl http://istiod.istio-system.svc.cluster.local:15014/metrics
+
+## Импорт Grafana dashboards
+
+Список использованных шаблонов с [Grafana Labs](https://grafana.com/orgs/istio/dashboards):
+- Istio Mesh Dashboard by istio
+- Istio Workload Dashboard by istio
