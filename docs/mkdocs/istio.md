@@ -127,23 +127,20 @@ metadata:
   name: istio-metrics
   namespace: monitoring
 spec:
-  jobName: istio
-  kubernetes_sd_configs:
+  kubernetesSDConfigs:
     - role: endpoints
       namespaces:
         names:
           - istio-system
   relabelConfigs:
-    - sourceLabels: [__meta_kubernetes_service_label_istio]
+    - sourceLabels: [__meta_kubernetes_service_name]
       action: keep
-      regex: pilot|envoy
-    - sourceLabels: [__meta_kubernetes_endpoint_address_target_kind]
+      regex: istiod
+    - sourceLabels: [__meta_kubernetes_endpoint_port_name]
       action: keep
-      regex: Pod
-    - sourceLabels: [__meta_kubernetes_endpoint_address_target_name]
-      targetLabel: pod_name
+      regex: http-monitoring
     - sourceLabels: [__meta_kubernetes_namespace]
-      targetLabel: namespace
+      targetLabel: istio-system
 ```
 
 !!! note "Полезные команды"
