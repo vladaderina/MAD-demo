@@ -94,7 +94,7 @@ jobs:
       - name: Deploy Product to Kubernetes
         if: steps.changes.outputs.product == 'true'
         run: |
-          helm upgrade --values ./helm/product/tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n product e-commerce ./helm/product
+          helm upgrade --values ./helm/product/tags.yaml --kubeconfig ~/.kube/kubeconfig-github --atomic --timeout 5m -n product product ./helm/product
       - name: Deploy Monitoring to Kubernetes
         if: steps.changes.outputs.monitoring == 'true'
         run: |
