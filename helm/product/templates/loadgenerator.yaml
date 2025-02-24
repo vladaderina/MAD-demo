@@ -114,6 +114,10 @@ spec:
           value: "10"
         - name: RATE
           value: "1"
+        ports:
+        - containerPort: 8089
+          name: locust-ui
+          protocol: TCP
         resources:
           {{- toYaml .Values.loadgenerator.resources | nindent 10 }}
 {{- if .Values.networkPolicies.create }}
