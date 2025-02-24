@@ -57,7 +57,7 @@ jobs:
         run: |
           for service in ${{ steps.changed-services.outputs.services }}; do
             if [ -d "src/$service" ]; then
-              yq -i ".${service}.tag = \"${GITHUB_SHA}\"" ./helm/tags.yaml
+              yq -i ".${service}.tag = \"${GITHUB_SHA}\"" ./helm/product/tags.yaml
             fi
           done
 
