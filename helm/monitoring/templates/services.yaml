@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vmsingle-service
+spec:
+  ports:
+    - name: service
+      protocol: TCP
+      port: 80
+      targetPort: 8429
+      nodePort: 30429
+  selector:
+    app.kubernetes.io/instance: monitoring
+    app.kubernetes.io/name: vmsingle
+  type: NodePort

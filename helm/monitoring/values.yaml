@@ -16,7 +16,7 @@ stack:
 
   kubeApiServer:
     enabled: false
-    
+
   kubeControllerManager:
     enabled: false
 
@@ -33,13 +33,13 @@ stack:
 
   kubeProxy:
     enabled: false
-  
+
   grafana:
     adminPassword: admin
     service:
       type: "NodePort"
       nodePort: 30300
-    dbPass: ""
+    dbPass: "grafana"
     extraSecretMounts:
       - name: postgres-db-mount
         secretName: postgres-db-password

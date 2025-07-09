@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     postgresql = {
-      source  = "local/postgresql"
-      version = "1.0.0"
+      source  = "cyrilgdn/postgresql"
+#      version = "~> 1.7.1"
     }
   }
 }

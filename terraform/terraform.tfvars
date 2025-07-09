@@ -1,3 +1,3 @@
-postgres_host = "192.168.39.24"
+postgres_host = "172.27.207.14"
 postgres_port = 30000
 postgres_user = "postgres"
