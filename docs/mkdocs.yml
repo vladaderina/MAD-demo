@@ -26,21 +26,22 @@ nav:
     - Архитектура HA кластера: architecture.md
     - Компоненты control plane: cp.md
     - Автоматизированное развертывание K8s: k8s-deploy.md
+  - Системные требования: requirements.md
   - Практика:
-      - Установка minikube: minikube.md
-      - Развертывание с Helm:
+      - Установка ПО:
+        - Установка minikube: minikube.md
+        - Установка k3s: k3s.md
+        - Установка остального ПО: others_pp.md
+      - Развертывание тестового стенда:
         - Приложение "E-commerce": e-commerce-deploy.md
-        - Система мониторинга: vm-deploy.md
-        - Хранилище: db-deploy.md
-      - Terraform: terraform.md
+        - Хранилище: storage.md
+        - Система мониторинга: monitoring.md
       - Сбор метрик: 
         - Метрики kubernetes: control-plane-metrics.md
         - Istio: istio.md
       - CI/CD: ci-cd.md
       - Анализ аномалий: 
         - Сontrol plane: breakdown1.md
-
-
 
 extra_css:
   - css/extra.css

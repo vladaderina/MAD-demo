@@ -66,10 +66,13 @@ helm search repo vm/
 ```
 helm show values vm/victoria-metrics-cluster > values.yaml
 ```
-
+Загружаем зависимости чарта:
+```
+helm dependency build
+```
 ### Конфигурация чарта
 
-Для проекта KubeAnomaly в чарте репозитория были выставлены 'enabled: false' для следующих values:
+Для проекта KubeAnomaly в чарте репозитория в файле values.yaml были выставлены 'enabled: false' для следующих values:
 
 - defaultRules
 
@@ -77,14 +80,16 @@ helm show values vm/victoria-metrics-cluster > values.yaml
 
 - Компоненты скрейпинга: kubelet, kubeApiServer, kubeControllerManager, kubeDns, kubeEtcd, kubeScheduler, kubeProxy
 
+А так же добавлен раздел с grafana.ini для обеспечения персистентности с дефолтной базы SQLite, которая находится уже внутри бинарника с Grafana, на базу PostgreSQL ([см. конфигурацию grafana.ini](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#database)).
+
 Устанавливаем чарт в кластер:
 
 ```
-helm dependency build
+helm upgrade monitoring . --install --create-namespace -n monitoring
 ```
-
+Проверяем доступность Grafana:
 ```
-helm install monitoring .
+curl localhost:30300
 ```
-
-
+!!! Note
+    Дефолтные логин и пароль в Grafana: `admin`

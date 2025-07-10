@@ -2,16 +2,6 @@
 
 #### 1 шаг. Установка minikube
 
-Свойства системы:
-```
-ОС: Ubuntu server
-
-CPU: 12
-
-MEM: 100Gb
-
-/dev/kvm exists
-```
 [Официальная документация по установке minikube](https://kubernetes.io/ru/docs/tasks/tools/install-minikube/)
 
 [Установка и настройка KVM на Ubuntu](https://help.ubuntu.com/community/KVM/Installation)

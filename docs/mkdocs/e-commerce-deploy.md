@@ -4,40 +4,20 @@
 
 ![alt text](images/e-commerce-scheme.png)
 
-#### 1 шаг. Установка minikube
-
-Инструкция и конфигурация minikube описаны на [странице с установкой](minikube.md).
-
-#### 2 шаг. Развертывание microservices-demo с помощью helm
+#### 1 шаг. Развертывание микросервисного приложения с помощью helm
 
 1. Клонируем репозиторий:
 ```
-git clone git@github.com:GoogleCloudPlatform/microservices-demo.git
+helm pull oci://us-docker.pkg.dev/online-boutique-ci/charts/onlineboutique --untar
 ```
 
-2. Устанавливаем helm:
-```
-curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-```
-```
-chmod 700 get_helm.sh
-```
-```
-./get_helm.sh
-```
-3. Проверяем, что helm установлен:
-```
-helm version
-```
-4. Меняем в манифесте `microservices-demo/helm-chart/templates/frontend.yaml` тип сервиса с LoadBalancer на NodePort
+2. Меняем в манифесте `microservices-demo/helm-chart/templates/frontend.yaml` тип сервиса с LoadBalancer на NodePort
 
-5. Развертываем приложение в кластере с помощью helm:
+3. Развертываем приложение в кластере с помощью helm:
 ```
-cd microservices-demo/helm-chart/
+helm upgrade onlineboutique ./onlineboutique --install --create-namespace -n shop
 ```
-```
-helm install my-microservice .
-```
+
 Все развернулось успешно:
 ![alt text](images/image-4.png)
 
