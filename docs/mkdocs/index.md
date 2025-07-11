@@ -1,4 +1,4 @@
-# KubeAnomaly - cистема поиска аномалий в метриках микросервисного приложения
+# MAD - cистема поиска аномалий в метриках микросервисного приложения
 
 В проекте испольуется Helm, Terraform, Istio,  Victoria Metrics, Grafana, Prometheus
 

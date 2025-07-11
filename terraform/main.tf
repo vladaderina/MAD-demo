@@ -52,3 +52,64 @@ resource "postgresql_grant" "grant_create_on_schema" {
 
   depends_on = [postgresql_database.grafana]
 }
+
+resource "postgresql_database" "ml_models" {
+  name = "ml_models"
+}
+
+resource "postgresql_schema" "models_schema" {
+  name     = "modeling"
+  database = postgresql_database.ml_models.name
+}
+
+resource "postgresql_extension" "uuid" {
+  name     = "uuid-ossp"
+  database = postgresql_database.ml_models.name
+}
+
+resource "postgresql_table" "models_table" {
+  name     = "models"
+  schema   = postgresql_schema.models_schema.name
+  database = postgresql_database.ml_models.name
+
+  owner = "mad"
+
+  depends_on = [postgresql_schema.models_schema]
+
+  columns = [
+    {
+      name = "id"
+      type = "uuid"
+      default = "uuid_generate_v4()"
+      null = false
+    },
+    {
+      name = "name"
+      type = "text"
+      null = false
+    },
+    {
+      name = "labels"
+      type = "jsonb"
+      null = false
+    },
+    {
+      name = "config"
+      type = "jsonb"
+      null = false
+    },
+    {
+      name = "history"
+      type = "jsonb"
+      null = false
+    },
+    {
+      name = "created_at"
+      type = "timestamp"
+      default = "now()"
+      null = false
+    }
+  ]
+
+  primary_key = ["id"]
+}

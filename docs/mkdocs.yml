@@ -27,21 +27,26 @@ nav:
     - Компоненты control plane: cp.md
     - Автоматизированное развертывание K8s: k8s-deploy.md
   - Системные требования: requirements.md
-  - Практика:
-      - Установка ПО:
-        - Установка minikube: minikube.md
-        - Установка k3s: k3s.md
-        - Установка остального ПО: others_pp.md
-      - Развертывание тестового стенда:
-        - Приложение "E-commerce": e-commerce-deploy.md
-        - Хранилище: storage.md
-        - Система мониторинга: monitoring.md
-      - Сбор метрик: 
-        - Метрики kubernetes: control-plane-metrics.md
-        - Istio: istio.md
-      - CI/CD: ci-cd.md
-      - Анализ аномалий: 
-        - Сontrol plane: breakdown1.md
+  - Установка ПО:
+    - Установка minikube: minikube.md
+    - Установка k3s: k3s.md
+    - Установка остального ПО: others_pp.md
+  - Развертывание тестового стенда:
+    - Приложение "E-commerce": e-commerce-deploy.md
+    - Хранилище: storage.md
+    - Система мониторинга: monitoring.md
+  - Компоненты MAD:
+    - Конфигурация: config.md
+    - Сервис сбора данных: metrics_collection.md
+    - Сервис обучения моделей: model_training.md
+    - Сервис предсказания аномалий: anomaly_prediction.md
+    - Сервис уведомлений: notification.md
+  - Сбор метрик: 
+    - Метрики kubernetes: control-plane-metrics.md
+    - Istio: istio.md
+  - CI/CD: ci-cd.md
+  - Анализ аномалий: 
+    - Сontrol plane: breakdown1.md
 
 extra_css:
   - css/extra.css

@@ -72,7 +72,7 @@ helm dependency build
 ```
 ### Конфигурация чарта
 
-Для проекта KubeAnomaly в чарте репозитория в файле values.yaml были выставлены 'enabled: false' для следующих values:
+Для проекта MAD в чарте репозитория в файле values.yaml были выставлены 'enabled: false' для следующих values:
 
 - defaultRules
 
