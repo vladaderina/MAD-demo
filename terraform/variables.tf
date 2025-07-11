@@ -24,3 +24,9 @@ variable "grafana_db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "mad_db_password" {
+  description = "Password for MAD database user"
+  type        = string
+  sensitive   = true
+}
