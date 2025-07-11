@@ -1,14 +1,14 @@
-site_name: KubeAnomaly
+site_name: Metrics Anomaly Detection
 
 docs_dir: mkdocs
 
-site_url: https://vladaderina.github.io/KubeAnomaly/
+site_url: https://vladaderina.github.io/MAD/
 
-site_description: Документация по проекту KubeAnomaly
+site_description: Документация по проекту Metrics Anomaly Detection
 
 site_author: Vlada Derina
 
-repo_url: https://github.com/vladaderina/KubeAnomaly/tree/main
+repo_url: https://github.com/vladaderina/MAD/tree/main
 
 theme:
   name: material

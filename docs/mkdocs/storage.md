@@ -9,7 +9,7 @@
 Дополнительно был добавлен сервис типа NodePort для дальнейшей конфигурации PostgreSQL через Terraform.
 
 ```bash
-git clone https://github.com/vladaderina/KubeAnomaly.git
+git clone https://github.com/vladaderina/MAD.git
 
 cd ./helm/storage
 

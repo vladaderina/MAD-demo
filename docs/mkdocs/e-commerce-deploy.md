@@ -1,6 +1,6 @@
 В проекте было использовано демонстрационное приложение ["E-commerce"](https://github.com/GoogleCloudPlatform/microservices-demo).
 
-Подробнее о логике работы приложения на странице: [Reverse engineering приложения "E-commerce"](https://vladaderina.github.io/KubeAnomaly/e-commerce-theory/).
+Подробнее о логике работы приложения на странице: [Reverse engineering приложения "E-commerce"](https://vladaderina.github.io/MAD/e-commerce-theory/).
 
 ![alt text](images/e-commerce-scheme.png)
 
