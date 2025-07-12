@@ -4,7 +4,8 @@ postgresql:
       type: NodePort
       nodePorts:
         postgresql: "30000"
-  extraEnvVarsSecret: "db-creds"
+    extraEnvVarsSecret: "db-creds"
+    pgHbaConfiguration: "pg-hba"
 
   auth:
     username: postgres
