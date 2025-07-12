@@ -6,10 +6,10 @@ postgresql:
         postgresql: "30000"
     extraEnvVarsSecret: "db-creds"
     pgHbaConfiguration: |
-      "# TYPE  DATABASE  USER  ADDRESS      METHOD
+      # TYPE  DATABASE  USER  ADDRESS      METHOD
       host    all       all   0.0.0.0/0    trust
       host    all       all   ::/0         trust
-      local   all       all                trust"
+      local   all       all                trust
 
   auth:
     username: postgres
