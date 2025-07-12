@@ -5,7 +5,11 @@ postgresql:
       nodePorts:
         postgresql: "30000"
     extraEnvVarsSecret: "db-creds"
-    pgHbaConfiguration: "pg-hba"
+    pgHbaConfiguration: |
+      "# TYPE  DATABASE  USER  ADDRESS      METHOD
+      host    all       all   0.0.0.0/0    trust
+      host    all       all   ::/0         trust
+      local   all       all                trust"
 
   auth:
     username: postgres
