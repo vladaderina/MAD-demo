@@ -21,12 +21,6 @@ postgresql:
   # Дополнительные скрипты для инициализации БД
   initdbScripts:
     01-create-grafana-db.sql: |
-      CREATE DATABASE grafana;
-      CREATE ROLE grafana WITH LOGIN PASSWORD '${GRAFANA_PASSWORD}';
-      GRANT CONNECT, TEMPORARY ON DATABASE grafana TO grafana;
-      GRANT USAGE, CREATE ON SCHEMA public TO grafana;
-      ALTER DEFAULT PRIVILEGES IN SCHEMA public 
-      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO grafana;
       CREATE DATABASE ml_models;
       CREATE ROLE mad WITH LOGIN PASSWORD '${MAD_PASSWORD}';
       GRANT CONNECT, TEMPORARY ON DATABASE ml_models TO mad;
