@@ -27,8 +27,6 @@ postgresql:
       GRANT USAGE, CREATE ON SCHEMA public TO grafana;
       ALTER DEFAULT PRIVILEGES IN SCHEMA public 
       GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO grafana;
-    
-    02-create-ml-db.sql: |
       CREATE DATABASE ml_models;
       CREATE ROLE mad WITH LOGIN PASSWORD '${MAD_PASSWORD}';
       GRANT CONNECT, TEMPORARY ON DATABASE ml_models TO mad;
