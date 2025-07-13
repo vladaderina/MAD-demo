@@ -28,7 +28,7 @@ postgresql:
           CREATE DATABASE ml_models;
           CREATE ROLE mad WITH LOGIN PASSWORD '${MAD_PASSWORD}';
           GRANT CONNECT, TEMPORARY ON DATABASE ml_models TO mad;
-                \connect ml_models
+          \connect ml_models
           CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
           CREATE SCHEMA modeling AUTHORIZATION mad;
           GRANT ALL ON SCHEMA modeling TO mad;
