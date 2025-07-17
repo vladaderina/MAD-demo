@@ -1,0 +1,34 @@
+{{- if .Values.vmagent.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vmagent
+  template:
+    metadata:
+      labels:
+        app: vmagent
+    spec:
+      containers:
+      - name: vmagent
+        image: "{{ .Values.vmagent.image.repository }}:{{ .Values.vmagent.image.tag }}"
+        args:
+        - "-promscrape.config=/etc/vmagent/config.yml"
+        - "-remoteWrite.url=http://victoria-metrics:8428/api/v1/write"
+        ports:
+        - containerPort: 8429
+          name: http
+        resources:
+          {{- toYaml .Values.vmagent.resources | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/vmagent
+      volumes:
+      - name: config
+        configMap:
+          name: vmagent-config
+{{- end }}

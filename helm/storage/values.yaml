@@ -15,6 +15,8 @@ postgresql:
   primary:
     readinessProbe:
       initialDelaySeconds: 15
+    livenessProbe:
+      initialDelaySeconds: 15
     service:
       type: NodePort
       nodePorts:
@@ -69,6 +71,7 @@ postgresql:
               metric_type VARCHAR(255) NOT NULL,
               start_monitoring TIMESTAMP(0) WITH TIME ZONE NOT NULL,
               end_monitoring TIMESTAMP(0) WITH TIME ZONE NOT NULL,
+              step INTEGER NOT NULL,
               status VARCHAR(255) NOT NULL
           );
 

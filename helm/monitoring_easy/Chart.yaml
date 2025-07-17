@@ -1,0 +1,5 @@
+apiVersion: v2
+name: victoriametrics-light
+description: Lightweight VictoriaMetrics single-node deployment with vmagent
+version: 0.1.0
+appVersion: "1.91.3"
