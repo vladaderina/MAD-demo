@@ -6,8 +6,8 @@ postgresql:
     secretKeys:
       adminPasswordKey: "postgres-root-pass"
   primary:
-  readinessProbe:
-    initialDelaySeconds: 15
+    readinessProbe:
+      initialDelaySeconds: 15
     service:
       type: NodePort
       nodePorts:
