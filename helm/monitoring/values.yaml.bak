@@ -1,0 +1,56 @@
+stack:
+  vmsingle:
+    enabled: true
+
+  vmcluster:
+    enabled: false
+
+  defaultRules:
+    create: false
+
+  kube-state-metrics:
+    enabled: false
+
+  kubelet:
+    enabled: false
+
+  kubeApiServer:
+    enabled: false
+
+  kubeControllerManager:
+    enabled: false
+
+  kubeDns:
+    enabled: false
+
+  coreDns:
+    enabled: false
+
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+
+  kubeProxy:
+    enabled: false
+
+  grafana:
+    adminPassword: admin
+    service:
+      type: "NodePort"
+      nodePort: 30300
+    dbPass: "grafana"
+    extraSecretMounts:
+      - name: postgres-db-mount
+        secretName: postgres-db-password
+        defaultMode: 0440
+        mountPath: /etc/secrets/postgres
+        readOnly: true
+    grafana.ini:
+      database:
+        type: postgres
+        host: storage-postgresql-0.storage-postgresql-hl.storage.svc.cluster.local
+        name: grafana
+        user: grafana
+        password: $__file{/etc/secrets/postgres/password}
+        ssl_mode: disable
