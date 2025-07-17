@@ -6,6 +6,8 @@ postgresql:
     secretKeys:
       adminPasswordKey: "postgres-root-pass"
   primary:
+  readinessProbe:
+    initialDelaySeconds: 15
     service:
       type: NodePort
       nodePorts:
@@ -60,8 +62,7 @@ postgresql:
               metric_type VARCHAR(255) NOT NULL,
               start_monitoring TIMESTAMP(0) WITH TIME ZONE NOT NULL,
               end_monitoring TIMESTAMP(0) WITH TIME ZONE NOT NULL,
-              is_active BOOLEAN NOT NULL
-
+              status VARCHAR(255) NOT NULL
           );
 
           -- ============================
