@@ -7,5 +7,5 @@ appVersion: "0.1.0"
 dependencies:
   - name: victoria-metrics-single
     alias: stack
-    version: "0.23.0
+    version: "0.23.0:"
     repository: https://victoriametrics.github.io/helm-charts
