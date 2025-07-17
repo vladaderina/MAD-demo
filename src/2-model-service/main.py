@@ -257,9 +257,10 @@ async def listen_for_metrics(queue, config, db_pool):
             print("⚠️ Invalid payload:", payload)
             return
 
-        row = await conn.fetchrow("""
+        # Используем ПУЛ, а не conn
+        row = await db_pool.fetchrow("""
             SELECT id, name FROM metrics 
-            WHERE id = $1 AND status = active 
+            WHERE id = $1 AND status = 'active'
               AND id NOT IN (SELECT metric_id FROM metric_models)
         """, metric_id)
 
@@ -270,11 +271,13 @@ async def listen_for_metrics(queue, config, db_pool):
             print(f"⏭ Metric {metric_id} already processed or inactive")
 
     conn = await asyncpg.connect(dsn="postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models")
-    await conn.add_listener('new_active_metric', lambda *args: asyncio.create_task(handle_notify(*args, queue=queue)))
+    await conn.add_listener('new_active_metric', lambda conn, pid, channel, payload:
+        asyncio.create_task(handle_notify(conn, pid, channel, payload)))
+
     print("👂 Listening for 'new_active_metric' notifications...")
 
     while True:
-        await asyncio.sleep(3600)  # Просто держим соединение открытым
+        await asyncio.sleep(3600)  # Поддержка живого соединения
 
 
 # === 8. Главный запуск ===
