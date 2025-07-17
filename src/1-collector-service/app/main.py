@@ -56,5 +56,5 @@ class MetricsCollector:
         logger.info(f"Saved metric data to {output_path}")
 
 if __name__ == "__main__":
-    collector = MetricsCollector("config/config.yaml")  # Уточнен путь к конфигу
+    collector = MetricsCollector("config/config.yaml")
     collector.run()
