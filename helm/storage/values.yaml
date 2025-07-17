@@ -1,4 +1,11 @@
 postgresql:
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: 17.2.0-debian-12-r10
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - docker-creds
   auth:
     username: postgres
     database: postgres
