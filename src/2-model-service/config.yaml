@@ -32,6 +32,7 @@ models:
   - name: "cpu_usage_model"
     metric: "cpu_usage"  # Название метрики
     type: "LSTM"
+    active_version: 1
     layers:
       - type: "LSTM"
         units: 64
@@ -56,6 +57,7 @@ models:
   - name: "memory_usage_model"
     metric: "memory_usage"  # Название метрики
     type: "LSTM"
+    active_version: 1
     layers:
       - type: "LSTM"
         units: 128

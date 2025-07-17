@@ -1,0 +1,227 @@
+$ anomaly-cli --help
+CLI для управления сервисом обнаружения аномалий с использованием LSTM и VictoriaMetrics
+
+Usage:
+  anomaly-cli <command> [options]
+
+Команды:
+──────────────────────────────────────────────
+МОДЕЛИ:
+  retrain                        Переобучить модель
+    --metric <name>              Название метрики
+    --version <N>                Версия модели
+
+  delete-model                   Удалить модель
+    --metric <name>
+    --version <N>
+
+  activate-model                 Активировать указанную версию модели
+    --metric <name>
+    --version <N>
+
+  list-models                    Показать список версий модели
+    --metric <name>
+
+  add-model                      Добавить или обновить модель из файла
+    --config <file.yaml>
+
+  show-model                     Показать параметры конкретной модели
+    --metric <name>
+    --version <N>
+
+  export-model                   Выгрузить модель в файл
+    --metric <name>
+    --version <N>
+    --output <path>
+
+  import-model                   Импортировать модель из файла
+    --metric <name>
+    --input <path>
+
+  set-training                   Настроить параметры обучения модели
+    --metric <name>
+    --version <N>
+    [--epochs <N>]
+    [--batch-size <N>]
+    [--fit-every <duration>]
+
+  set-retrain                    Настроить расписание переобучения
+    --metric <name>
+    --version <N>
+    [--schedule <duration>]
+    [--drift-detection true|false]
+    [--validation-threshold <float>]
+
+  show-training                  Показать текущие параметры обучения
+    --metric <name>
+    --version <N>
+
+──────────────────────────────────────────────
+МЕТРИКИ:
+  delete-metric                  Удалить метрику и все связанные модели
+    <metric>
+
+  list-metrics                   Показать все метрики с моделями
+
+──────────────────────────────────────────────
+ЗАПРОСЫ (PROMQL):
+  add-query                      Добавить PromQL-запрос
+    --name <query_name>
+    --query <promql_expression>
+
+  delete-query                   Удалить PromQL-запрос
+    --name <query_name>
+
+  list-queries                   Список всех PromQL-запросов
+
+  show-query                     Показать конкретный запрос
+    --name <query_name>
+
+──────────────────────────────────────────────
+АНОМАЛИИ:
+  set-threshold                  Установить порог аномалии
+    --metric <name>
+    --threshold <float>
+
+  set-smoothing                  Установить размер окна сглаживания
+    --window <N>
+
+──────────────────────────────────────────────
+УВЕДОМЛЕНИЯ:
+  set-telegram                   Настроить Telegram-уведомления
+    --enabled true|false
+    --bot-token <token>
+    --chat-id <id>
+    [--template <msg_template>]
+
+──────────────────────────────────────────────
+ИНФРАСТРУКТУРА:
+  show-infra                     Показать текущие настройки инфраструктуры
+
+  set-infra                      Обновить параметры инфраструктуры
+    [--gpu-enabled true|false]
+    [--workers <N>]
+    [--memory-limit <size>]
+    [--model-storage <path>]
+
+──────────────────────────────────────────────
+МОНИТОРИНГ:
+  set-monitoring                 Настроить мониторинг и логирование
+    --log-path <path>
+    --metrics <mse,mae,...>
+
+  set-alerting                   Настроить параметры алертов
+    --enabled true|false
+    --threshold <N>
+
+──────────────────────────────────────────────
+КОНФИГ:
+  validate-config                Проверить конфигурационный файл
+    --file <config.yaml>
+
+  apply-config                   Применить конфигурацию
+    --file <config.yaml>
+
+  export-config                  Выгрузить текущую конфигурацию
+    --output <config.yaml>
+
+──────────────────────────────────────────────
+ДИАГНОСТИКА:
+  status                         Проверить статус модели
+    --metric <name>
+
+  last-prediction                Показать время и значение последнего предсказания
+    --metric <name>
+
+# переобучить конкретную модель
+$ anomaly-cli retrain --metric cpu.usage --version 3
+
+# удалить старую модель
+$ anomaly-cli delete-model --metric cpu.usage --version 2
+
+# удалить метрику
+$ anomaly-cli delete-metric cpu.usage
+
+# получить список версий
+$ anomaly-cli list-models --metric cpu.usage
+
+# активировать конкретную версию
+$ anomaly-cli activate-model --metric cpu.usage --version 4
+
+# Добавить/обновить модель (создание из конфига или JSON)
+$ anomaly-cli add-model --config model_config.yaml
+
+# Получить параметры конкретной модели
+$ anomaly-cli show-model --metric cpu.usage --version 1
+
+# Выгрузить модель в файл
+$ anomaly-cli export-model --metric cpu.usage --version 1 --output /tmp/cpu_model.pkl
+
+# Импорт модели из файла
+$ anomaly-cli import-model --metric cpu.usage --input /tmp/cpu_model.pkl
+
+# Добавить новый PromQL-запрос
+$ anomaly-cli add-query --name query_cpu --query 'avg(cpu_usage) by (instance)'
+
+# Удалить PromQL-запрос
+$ anomaly-cli delete-query --name query_cpu
+
+# Список всех запросов
+$ anomaly-cli list-queries
+
+# Просмотр одного запроса
+$ anomaly-cli show-query --name query_cpu
+
+# Установить параметры обучения модели
+$ anomaly-cli set-training --metric cpu.usage --version 1 --epochs 100 --batch-size 64 --fit-every 1h
+
+# Установить расписание переобучения
+$ anomaly-cli set-retrain --metric cpu.usage --version 1 --schedule 24h --drift-detection true
+
+# Получить текущие параметры обучения
+$ anomaly-cli show-training --metric cpu.usage --version 1
+
+# Установить порог аномалии
+$ anomaly-cli set-threshold --metric cpu.usage --threshold 3.5
+
+# Установить окно сглаживания
+$ anomaly-cli set-smoothing --window 10
+
+# Установить Telegram-уведомления
+$ anomaly-cli set-telegram --bot-token "TOKEN" --chat-id "123456" --enabled true
+
+# Показать текущие настройки инфраструктуры
+$ anomaly-cli show-infra
+
+# Обновить лимиты ресурсов
+$ anomaly-cli set-infra --gpu-enabled true --workers 4 --memory-limit 8G
+
+# Установить параметры мониторинга
+$ anomaly-cli set-monitoring --log-path "/logs/app.log" --metrics mse mae anomaly_count
+
+# Установить алерты
+$ anomaly-cli set-alerting --enabled true --threshold 200
+
+# Показать текущие настройки API
+$ anomaly-cli show-api
+
+# Изменить настройки API
+$ anomaly-cli set-api --host 0.0.0.0 --port 8081
+
+# Проверка конфигурации на валидность
+$ anomaly-cli validate-config --file config.yaml
+
+# Применить новую конфигурацию
+$ anomaly-cli apply-config --file config.yaml
+
+# Выгрузить текущую конфигурацию
+$ anomaly-cli export-config --output config.yaml
+
+# Проверка состояния модели
+$ anomaly-cli status --metric cpu.usage
+
+# Проверка последнего инференса
+$ anomaly-cli last-prediction --metric cpu.usage
+
+# Список всех метрик и моделей
+$ anomaly-cli list-metrics

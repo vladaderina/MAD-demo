@@ -42,12 +42,16 @@ models:
       - type: "Dense"
         units: 1
     loss: "mean_squared_error"
+    active_version: 1
     optimizer: "adam"
     epochs: 50
     batch_size: 32
     validation_split: 0.2
     dropout: 0.2  # Dropout для предотвращения переобучения
     learning_rate: 0.001
+    fit_every: 
+    infer_every: 
+    fit_window: 
     retrain:
       schedule: "24h"  # Переобучение каждые 24 часа
       drift_detection: True  # Переобучение при дрейфе данных
@@ -67,6 +71,7 @@ models:
         units: 1
     loss: "mean_absolute_error"
     optimizer: "rmsprop"
+    active_version: 1
     epochs: 30
     batch_size: 64
     validation_split: 0.2
