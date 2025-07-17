@@ -1,32 +1,24 @@
-# values.yaml
 stack:
-  # Отключаем Grafana
+  # Отключаем ненужные компоненты
   grafana:
     enabled: false
-
-  # Отключаем Alertmanager
   alertmanager:
     enabled: false
-
-  # Отключаем Prometheus Operator (если не нужен)
   prometheusOperator:
     enabled: false
-
-  # Отключаем kube-state-metrics (если не нужен)
   kubeStateMetrics:
     enabled: false
-
-  # Отключаем node-exporter (если не нужен)
   nodeExporter:
     enabled: false
 
   # Настройки VictoriaMetrics
   victoria-metrics-operator:
-    enabled: true  # Оставляем только оператор VictoriaMetrics
+    enabled: true
+    vmalert:
+      enabled: false  # ← Отключаем vmalert
 
-  # Настройки самого VictoriaMetrics (single или cluster)
   victoria-metrics-single:
-    enabled: true  # Включаем только single-режим
+    enabled: true
     vmselect:
       enabled: true
     vminsert:
