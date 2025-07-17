@@ -1,56 +1,35 @@
+# values.yaml
 stack:
-  vmsingle:
-    enabled: true
-
-  vmcluster:
-    enabled: false
-
-  defaultRules:
-    create: false
-
-  kube-state-metrics:
-    enabled: false
-
-  kubelet:
-    enabled: false
-
-  kubeApiServer:
-    enabled: false
-
-  kubeControllerManager:
-    enabled: false
-
-  kubeDns:
-    enabled: false
-
-  coreDns:
-    enabled: false
-
-  kubeEtcd:
-    enabled: false
-  kubeScheduler:
-    enabled: false
-
-  kubeProxy:
-    enabled: false
-
+  # Отключаем Grafana
   grafana:
-    adminPassword: admin
-    service:
-      type: "NodePort"
-      nodePort: 30300
-    dbPass: "grafana"
-    extraSecretMounts:
-      - name: postgres-db-mount
-        secretName: postgres-db-password
-        defaultMode: 0440
-        mountPath: /etc/secrets/postgres
-        readOnly: true
-    grafana.ini:
-      database:
-        type: postgres
-        host: storage-postgresql-0.storage-postgresql-hl.storage.svc.cluster.local
-        name: grafana
-        user: grafana
-        password: $__file{/etc/secrets/postgres/password}
-        ssl_mode: disable
+    enabled: false
+
+  # Отключаем Alertmanager
+  alertmanager:
+    enabled: false
+
+  # Отключаем Prometheus Operator (если не нужен)
+  prometheusOperator:
+    enabled: false
+
+  # Отключаем kube-state-metrics (если не нужен)
+  kubeStateMetrics:
+    enabled: false
+
+  # Отключаем node-exporter (если не нужен)
+  nodeExporter:
+    enabled: false
+
+  # Настройки VictoriaMetrics
+  victoria-metrics-operator:
+    enabled: true  # Оставляем только оператор VictoriaMetrics
+
+  # Настройки самого VictoriaMetrics (single или cluster)
+  victoria-metrics-single:
+    enabled: true  # Включаем только single-режим
+    vmselect:
+      enabled: true
+    vminsert:
+      enabled: true
+    vmstorage:
+      enabled: true

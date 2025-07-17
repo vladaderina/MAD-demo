@@ -35,7 +35,7 @@ async def fetch_metric_data(metric_name: str, db_pool, config: dict) -> pd.DataF
     """
     async with db_pool.acquire() as conn:
         rows = await conn.fetch("""
-            SELECT r.query, m.start_monitoring, m.end_monitoring, m.step
+            SELECT r.query_text, m.start_monitoring, m.end_monitoring, m.step
             FROM metrics m
             JOIN metric_requests mr ON m.id = mr.metric_id
             JOIN request r ON mr.request_id = r.id
@@ -49,14 +49,14 @@ async def fetch_metric_data(metric_name: str, db_pool, config: dict) -> pd.DataF
 
     async with aiohttp.ClientSession() as session:
         for i, row in enumerate(rows):
-            query, start, end, step = row["query"], row["start"], row["end"], row["step"]
+            query, start, end, step = row["query_text"], row["start_monitoring"], row["end_monitoring"], row["step"]
 
-            url = f"{config['victoriametrics']['url']}/api/v1/query_range"
+            url = f"{config['victoriametrics']['url']}/query_range"
             params = {
                 "query": query,
-                "start": start,
-                "end": end,
-                "step": step or "60"
+                "start": start.isoformat() + 'Z',
+                "end": end.isoformat() + 'Z',
+                "step": "15s"
             }
 
             async with session.get(url, params=params) as resp:
