@@ -138,7 +138,7 @@ postgresql:
           -- Создание функций и триггеров
           CREATE OR REPLACE FUNCTION notify_new_metric() RETURNS trigger AS $$
           BEGIN
-            IF NEW.is_active = true THEN
+            IF NEW.status = active THEN
               PERFORM pg_notify('new_active_metric', NEW.id::text);
             END IF;
             RETURN NEW;

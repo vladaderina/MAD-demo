@@ -18,13 +18,14 @@ def load_config(path="config.yaml"):
 
 config = load_config()
 
-db_pool = await asyncpg.create_pool(
-    user="mad",
-    password="secretPASSW0rd",
-    database="ml_models",
-    host="80.93.60.49",
-    port=30000,
-)
+async def create_db_pool():
+    return await asyncpg.create_pool(
+        user="mad",
+        password="secretPASSW0rd",
+        database="ml_models",
+        host="80.93.60.49",
+        port=30000,
+    )
 
 # === 2. Получение данных из VictoriaMetrics ===
 async def fetch_metric_data(metric_name: str, db_pool, config: dict) -> pd.DataFrame:
@@ -219,7 +220,7 @@ async def save_model(metric_id, model, model_info):
     await conn.close()
 
 # === 5. Обработка метрики из очереди ===
-async def process_metric(queue, config):
+async def process_metric(queue, config, db_pool):
     while True:
         metric = await queue.get()
         print(f"🚀 Start training for metric: {metric['name']}")
@@ -241,13 +242,13 @@ async def process_metric(queue, config):
 
 
 # === 6. Запуск воркеров ===
-async def run_training_queue(queue, config):
-    workers = [asyncio.create_task(process_metric(queue, config)) for _ in range(config["infrastructure"]["workers"])]
+async def run_training_queue(queue, config, db_pool):
+    workers = [asyncio.create_task(process_metric(queue, config, db_pool)) 
+               for _ in range(config["infrastructure"]["workers"])]
     await asyncio.gather(*workers)
 
-
 # === 7. Подписка на события PostgreSQL ===
-async def listen_for_metrics(queue, config):
+async def listen_for_metrics(queue, config, db_pool):
     async def handle_notify(conn, pid, channel, payload):
         print(f"📡 Notification received on {channel}: {payload}")
         try:
@@ -258,7 +259,7 @@ async def listen_for_metrics(queue, config):
 
         row = await conn.fetchrow("""
             SELECT id, name FROM metrics 
-            WHERE id = $1 AND is_active = true 
+            WHERE id = $1 AND status = active 
               AND id NOT IN (SELECT metric_id FROM metric_models)
         """, metric_id)
 
@@ -278,11 +279,13 @@ async def listen_for_metrics(queue, config):
 
 # === 8. Главный запуск ===
 async def main():
+    config = load_config()
+    db_pool = await create_db_pool()
+    
     queue = asyncio.Queue()
     await asyncio.gather(
-        listen_for_metrics(queue, config),
-        run_training_queue(queue, config)
+        listen_for_metrics(queue, config, db_pool),
+        run_training_queue(queue, config, db_pool)
     )
-
 if __name__ == "__main__":
     asyncio.run(main())

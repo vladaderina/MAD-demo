@@ -6,20 +6,20 @@ service:
 victoriametrics:
   url: "http://80.93.60.49:30429"  # URL VictoriaMetrics
   promql_queries:  # Список PROMQL-запросов для получения данных
-    - name: "query_duration"
-      query: 'max(vm_request_duration_seconds{job="vmsingle-monitoring-stack", instance="10.42.0.57:8429", quantile="0.99"}) by (path, instance) > 0'
+    - name: "requests_total"
+      query: 'vm_http_requests_total{path="/metrics"}'
       time_settings:
         # Вариант 1: Автоматический расчет (относительно текущего времени)
         auto_range:
-          lookback_period: "20m"  # Период для запроса исторических данных
+          lookback_period: "5m"  # Период для запроса исторических данных
           step: "1m"
-    - name: "query_duration_2"
-      query: 'max(vm_request_duration_seconds{job="vmsingle-monitoring-stack", instance="10.42.0.57:8429", quantile="0.99"}) by (job, instance) > 0'
+    - name: "requests_total_2"
+      query: 'vm_http_requests_total{path="/metrics"}'
       time_settings:
         # Вариант 2: Фиксированный диапазон (укажите хотя бы один)
         fixed_range:
-          start: "2025-07-11T07:36:20Z"  # Начало периода (ISO format)
-          end: "2025-07-11T07:44:10Z"    # Конец периода (ISO format)
+          start: "2025-07-17T16:32:20Z"  # Начало периода (ISO format)
+          end: "2025-07-17T16:35:10Z"    # Конец периода (ISO format)
           step: "1m"                    # Можно переопределить шаг
 
 data:
