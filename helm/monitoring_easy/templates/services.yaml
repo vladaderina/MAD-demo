@@ -7,7 +7,7 @@ spec:
     - name: service
       protocol: TCP
       port: 80
-      targetPort: 8429
+      targetPort: 8428
       nodePort: 30429
   selector:
     app.kubernetes.io/instance: monitoring
