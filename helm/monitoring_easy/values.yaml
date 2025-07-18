@@ -9,15 +9,11 @@ stack:
   vmstorage:
     enabled: true
 
-  # Добавляем scrape-конфигурацию для сбора метрик самой VictoriaMetrics
   server:
     enabled: true
-    scrape:
-      config: |
-        scrape_configs:
-          - job_name: "victoriametrics"
-            static_configs:
-              - targets: 
-                  - "80.93.60.49:30429"
-            metrics_path: "/metrics"
-            scheme: "http"
+    extraScrapeConfigs:
+      - job_name: "victoriametrics-self"
+        static_configs:
+          - targets: ["80.93.60.49:30429"]
+        metrics_path: "/metrics"
+        scheme: "http"
