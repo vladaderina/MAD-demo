@@ -13,8 +13,8 @@ stack:
   server:
     enabled: true
     scrape:
-      config:
-        scrape_configs: |
+      config: |
+        scrape_configs:
           - job_name: "victoriametrics"
             static_configs:
               - targets: 
