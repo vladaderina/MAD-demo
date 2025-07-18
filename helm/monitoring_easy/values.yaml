@@ -18,6 +18,6 @@ stack:
           - job_name: "victoriametrics"
             static_configs:
               - targets: 
-                  - "localhost:8428"
+                  - "80.93.60.49:30429"
             metrics_path: "/metrics"
             scheme: "http"
