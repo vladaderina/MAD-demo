@@ -1,0 +1,23 @@
+# values.yaml
+stack:
+  # Настройки VictoriaMetrics Single
+  enabled: true
+  vmselect:
+    enabled: true
+  vminsert:
+    enabled: true
+  vmstorage:
+    enabled: true
+
+  # Добавляем scrape-конфигурацию для сбора метрик самой VictoriaMetrics
+  server:
+    enabled: true
+    scrape:
+      configs:
+        scrape_configs: |
+          - job_name: "victoriametrics"
+            static_configs:
+              - targets: 
+                  - "localhost:8428"
+            metrics_path: "/metrics"
+            scheme: "http"
