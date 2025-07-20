@@ -5,84 +5,108 @@ metadata:
   labels:
     app: postgresql
 data:
-  01-create-grafana.sql: |-
+  01-create-db.sql: |-
     CREATE DATABASE grafana;
-    CREATE ROLE grafana WITH LOGIN PASSWORD 'grafana';
-    GRANT CONNECT, TEMPORARY ON DATABASE grafana TO grafana;
-    GRANT USAGE, CREATE ON SCHEMA public TO grafana;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO grafana;
-
-  02-create-ml-db.sql: |-
     CREATE DATABASE ml_models;
-    CREATE ROLE mad WITH LOGIN PASSWORD 'mad';
-    GRANT CONNECT, TEMPORARY ON DATABASE ml_models TO mad;
+
+  02-roles-db.sql: |-
+    CREATE ROLE grafana WITH LOGIN PASSWORD '${GRAFANA_PASSWORD}';
+    CREATE ROLE mad WITH LOGIN PASSWORD '${MAD_PASSWORD}';
+    GRANT CONNECT ON DATABASE grafana TO grafana;
+    GRANT ALL PRIVILEGES ON DATABASE ml_models TO mad;
 
   03-ml-models-init.sql: |-
     \connect ml_models
     CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-    CREATE SCHEMA modeling AUTHORIZATION mad;
-    GRANT ALL ON SCHEMA modeling TO mad;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA modeling GRANT ALL PRIVILEGES ON TABLES TO mad;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA modeling GRANT ALL PRIVILEGES ON SEQUENCES TO mad;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA modeling GRANT EXECUTE ON FUNCTIONS TO mad;
+    ALTER SCHEMA public OWNER TO mad;
 
-  04-create-models-table.sql: |-
+  04-create-tables.sql: |-
     \connect ml_models
-    CREATE TABLE models (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        model_data BYTEA NOT NULL,
-        created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL,
-        last_updated TIMESTAMP(0) WITH TIME ZONE NOT NULL,
-        hyperparams JSONB NOT NULL,
-        status VARCHAR(255) NOT NULL,
-        version VARCHAR(255) NOT NULL
-    );
+    -- Таблица метрик
     CREATE TABLE metrics (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        metric_type VARCHAR(255) NOT NULL,
-        is_active BOOLEAN NOT NULL
+        status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'deactive')),
+        query TEXT NOT NULL,
+        step INTEGER NOT NULL DEFAULT 60
     );
-    CREATE TABLE request (
+
+    -- Таблица моделей
+    CREATE TABLE models (
         id SERIAL PRIMARY KEY,
-        query_text TEXT NOT NULL
+        name VARCHAR(255) NOT NULL,
+        max_stored_versions INTEGER NOT NULL DEFAULT 3,
+        hyperparams_mode VARCHAR(20) NOT NULL CHECK (hyperparams_mode IN ('manual', 'optuna')),
+        status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'deactive', 'training', 'waiting')),
+        active_version VARCHAR(255) NOT NULL,
+        training_start TIMESTAMP WITH TIME ZONE NOT NULL,
+        training_end TIMESTAMP WITH TIME ZONE NOT NULL
     );
-    CREATE TABLE metric_requests (
+
+    -- Таблица версий моделей
+    CREATE TABLE models_version (
         id SERIAL PRIMARY KEY,
-        request_id INTEGER NOT NULL,
-        metric_id INTEGER NOT NULL,
-        CONSTRAINT metric_requests_request_id_fk FOREIGN KEY (request_id) REFERENCES request(id),
-        CONSTRAINT metric_requests_metric_id_fk FOREIGN KEY (metric_id) REFERENCES metrics(id)
+        model_data BYTEA NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        version VARCHAR(255) NOT NULL DEFAULT '1',
+        model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
+        hyperparams JSONB NOT NULL
     );
+
+    -- Таблица аномальных точек
     CREATE TABLE anomaly_points (
         id SERIAL PRIMARY KEY,
-        metric_id INTEGER NOT NULL,
-        timestamp TIMESTAMP(0) WITH TIME ZONE NOT NULL,
-        model_id INTEGER NOT NULL,
-        CONSTRAINT anomaly_points_metric_id_fk FOREIGN KEY (metric_id) REFERENCES metrics(id),
-        CONSTRAINT anomaly_points_model_id_fk FOREIGN KEY (model_id) REFERENCES models(id)
+        model_version_id INTEGER NOT NULL REFERENCES models_version(id) ON DELETE CASCADE,
+        metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
+        timestamp TIMESTAMP WITH TIME ZONE NOT NULL
     );
+
+    -- Таблица системных аномалий
     CREATE TABLE anomaly_system (
         id SERIAL PRIMARY KEY,
-        start_time TIMESTAMP(0) WITH TIME ZONE NOT NULL,
-        end_time TIMESTAMP(0) WITH TIME ZONE NOT NULL,
-        anomaly_type VARCHAR(255) NOT NULL,
-        status VARCHAR(255) NOT NULL,
+        start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+        end_time TIMESTAMP WITH TIME ZONE,
+        anomaly_type VARCHAR(20) NOT NULL CHECK (anomaly_type IN ('local', 'group', 'global')),
         average_anom_score INTEGER NOT NULL,
-        metric_id INTEGER NOT NULL,
-        CONSTRAINT anomaly_system_metric_id_fk FOREIGN KEY (metric_id) REFERENCES metrics(id)
+        metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
+        description VARCHAR(255) NOT NULL DEFAULT 'Detected by MAD'
     );
-    CREATE TABLE metric_models (
+
+    -- Связующая таблица моделей и метрик
+    CREATE TABLE features (
+        model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
+        metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
+        PRIMARY KEY (model_id, metric_id)
+    );
+
+    -- Таблица шаблонов оповещений
+    CREATE TABLE alert_templates (
         id SERIAL PRIMARY KEY,
-        model_id INTEGER NOT NULL,
-        metric_id INTEGER NOT NULL,
-        CONSTRAINT metric_models_model_id_fk FOREIGN KEY (model_id) REFERENCES models(id),
-        CONSTRAINT metric_models_metric_id_fk FOREIGN KEY (metric_id) REFERENCES metrics(id)
+        type VARCHAR(20) NOT NULL CHECK (type IN ('local', 'group', 'global')),
+        message VARCHAR(255) NOT NULL
     );
 
   05-create-indexes.sql: |-
     \connect ml_models
-    CREATE INDEX IF NOT EXISTS idx_models_name ON modeling.models (name);
-    CREATE INDEX IF NOT EXISTS idx_models_created_at ON modeling.models (created_at);
+    CREATE INDEX idx_metrics_status ON metrics (status);
+    CREATE INDEX idx_models_status ON models (status);
+    CREATE INDEX idx_models_active_version ON models (active_version);
+    CREATE INDEX idx_models_version_model_id ON models_version (model_id);
+    CREATE INDEX idx_anomaly_points_timestamp ON anomaly_points (timestamp);
+    CREATE INDEX idx_anomaly_system_metric_id ON anomaly_system (metric_id);
+
+  06-create-trigger.sql: |-
+    \connect ml_models
+    CREATE OR REPLACE FUNCTION notify_model_status_change()
+    RETURNS trigger AS $$
+    BEGIN
+      IF NEW.status = 'waiting' THEN
+        PERFORM pg_notify('model_training_queue', NEW.id::text);
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    CREATE TRIGGER model_training_trigger
+    AFTER INSERT OR UPDATE OF status ON models
+    FOR EACH ROW EXECUTE FUNCTION notify_model_status_change();
