@@ -46,7 +46,7 @@ async def fetch_metric_data(metric_name: str, db_pool, config: dict) -> pd.DataF
             SELECT id, query, step FROM metrics 
             WHERE name = $1
         """, metric_name)
-
+    print("VM get metricsssssssssssssss")
     if not metric:
         raise ValueError(f"Metric '{metric_name}' not found in database")
 
@@ -154,7 +154,7 @@ async def save_model(model_name: str, model, model_info, db_pool):
         model_id = await conn.fetchval("""
             SELECT id FROM models WHERE name = $1
         """, model_name)
-        
+        print("1")
         if not model_id:
             # Создаем новую модель если не существует
             model_id = await conn.fetchval("""
@@ -177,7 +177,7 @@ async def save_model(model_name: str, model, model_info, db_pool):
             "1.0",
             datetime.now(timezone.utc),
             datetime.now(timezone.utc))
-
+        print("2")
         # Сериализация модели и scaler
         model_data = pickle.dumps({
             'model': model,
@@ -201,54 +201,125 @@ async def save_model(model_name: str, model, model_info, db_pool):
         json.dumps(model_info['config']))
 
 # === 5. Обработка модели из очереди ===
-async def process_model(queue, config, db_pool):
+async def process_model(queue, db_pool):
     while True:
-        model_name = await queue.get()
-        print(f"🚀 Start training for model: {model_name}")
-        
-        try:
-            # Получаем конфигурацию модели
-            model_config = next(
-                m for m in config["mad_predictor"]["models"] 
-                if m["name"] == model_name
-            )
+        model_id = await queue.get()
+        print(f"🚀 Start processing model with ID: {model_id}")
+        print("3")
+        async with db_pool.acquire() as conn:
+            try:
+                # Начинаем транзакцию
+                async with conn.transaction():
+                    # Получаем информацию о модели и обновляем статус на 'training'
+                    model = await conn.fetchrow("""
+                        UPDATE models 
+                        SET status = 'training' 
+                        WHERE id = $1 
+                        RETURNING id, name, metric_id, hyperparams_mode, 
+                                    training_start, training_end
+                    """, model_id)
+                    print("4")
+                    if not model:
+                        print(f"⏭ Model {model_id} not found")
+                        continue
+                    
+                    # Получаем основную метрику
+                    main_metric = await conn.fetchrow("""
+                        SELECT id, name, query, step 
+                        FROM metrics 
+                        WHERE id = $1 AND status = 'active'
+                    """, model['metric_id'])
+                    print("5")
+                    if not main_metric:
+                        print(f"⏭ Main metric for model {model['name']} not found or inactive")
+                        await conn.execute("UPDATE models SET status = 'deactive' WHERE id = $1", model_id)
+                        continue
+                    print("6")
+                    # Получаем связанные метрики (фичи)
+                    features = await conn.fetch("""
+                        SELECT m.id, m.name, m.query, m.step 
+                        FROM features f
+                        JOIN metrics m ON f.metric_id = m.id
+                        WHERE f.model_id = $1 AND m.status = 'active'
+                    """, model_id)
+                    print("7")
+                    # Формируем список всех метрик (основная + фичи)
+                    all_metrics = [main_metric] + [dict(f) for f in features]
+                    print("8")
+                    # Получаем параметры модели
+                    manual_params = {}
+                    if model['hyperparams_mode'] == 'manual':
+                        manual_params = await conn.fetchrow("""
+                            SELECT * FROM models_version 
+                            WHERE model_id = $1 AND is_active = true
+                        """, model_id)
+                        manual_params = dict(manual_params) if manual_params else {}
+                    print("9")
+                    # Получаем данные для всех метрик
+                    metric_data = []
+                    for metric in all_metrics:
+                        data = await fetch_metric_data(
+                            metric['query'],
+                            metric['step'],
+                            model['training_start'],
+                            model['training_end'],
+                            db_pool
+                        )
+                        metric_data.append(data)
+                    
+                    # Обучаем модель
+                    training_result = await train_lstm_model(
+                        metric_data,
+                        manual_params
+                    )
+                    print("10")
+                    # Сохраняем модель
+                    await save_model(
+                        model['id'],
+                        training_result["model"],
+                        {
+                            "config": training_result["config"],
+                            "scaler": training_result["scaler"],
+                            "window_size": training_result["window_size"]
+                        },
+                        db_pool
+                    )
+                    print("11")
+                    # Обновляем статус модели на 'active'
+                    await conn.execute("""
+                        UPDATE models 
+                        SET status = 'active', 
+                            active_version = $2,
+                            training_start = NOW(),
+                            training_end = NOW()
+                        WHERE id = $1
+                    """, model_id, str(training_result["version"]))
+                    print("12")
+                    print(f"✅ Model {model['name']} (ID: {model_id}) successfully trained and saved")
             
-            # Получаем основную метрику
-            main_metric = model_config["main_metric"]
+            except Exception as e:
+                print(f"❌ Error processing model {model_id}: {str(e)}")
+                # В случае ошибки возвращаем модель в статус 'active' или 'waiting'
+                try:
+                    await conn.execute("""
+                        UPDATE models 
+                        SET status = CASE 
+                            WHEN status = 'training' THEN 'active' 
+                            ELSE status 
+                        END
+                        WHERE id = $1
+                    """, model_id)
+                except Exception as update_err:
+                    print(f"⚠️ Failed to update model status: {update_err}")
             
-            # Получаем данные для обучения
-            data = await fetch_metric_data(main_metric, db_pool, config)
-            
-            # Обучаем модель
-            training_result = await train_lstm_model(
-                data, 
-                model_config.get("manual_params", {})
-            )
-            
-            # Сохраняем модель
-            await save_model(
-                model_name,
-                training_result["model"],
-                {
-                    "config": training_result["config"],
-                    "scaler": training_result["scaler"],
-                    "window_size": training_result["window_size"]
-                },
-                db_pool
-            )
-            
-            print(f"✅ Model saved for: {model_name}")
-            
-        except Exception as e:
-            print(f"❌ Error processing model {model_name}: {str(e)}")
-            
-        finally:
-            queue.task_done()
+            finally:
+                queue.task_done()
 
 # === 6. Запуск воркеров ===
 async def run_training_queue(queue, config, db_pool):
+    print("122")
     workers = [
-        asyncio.create_task(process_model(queue, config, db_pool)) 
+        asyncio.create_task(process_model(queue, db_pool)) 
         for _ in range(config["system"].get("workers", 3))
     ]
     await asyncio.gather(*workers)
@@ -266,20 +337,20 @@ async def listen_for_models(queue, config, db_pool):
         async with db_pool.acquire() as conn:
             model = await conn.fetchrow("""
                 SELECT id, name FROM models 
-                WHERE id = $1 AND status = 'active'
+                WHERE id = $1 AND status = 'waiting'
             """, model_id)
 
             if model:
-                await queue.put(model["name"])
+                await queue.put(model["id"])
                 print(f"📥 Model {model['name']} added to queue")
             else:
                 print(f"⏭ Model {model_id} is inactive or not found")
 
     conn = await asyncpg.connect(dsn=config["system"]["db_conn_string"])
-    await conn.add_listener('new_active_model', lambda conn, pid, channel, payload:
+    await conn.add_listener('model_training_queue', lambda conn, pid, channel, payload:
         asyncio.create_task(handle_notify(conn, pid, channel, payload)))
 
-    print("👂 Listening for 'new_active_model' notifications...")
+    print("👂 Listening for 'model_training_queue' notifications...")
 
     while True:
         await asyncio.sleep(3600)  # Поддержка живого соединения
@@ -290,11 +361,7 @@ async def main():
     db_pool = await create_db_pool()
     
     queue = asyncio.Queue()
-    
-    # Добавляем модели из конфига в очередь для первоначального обучения
-    for model in config["mad_predictor"]["models"]:
-        await queue.put(model["name"])
-    
+
     await asyncio.gather(
         listen_for_models(queue, config, db_pool),
         run_training_queue(queue, config, db_pool)

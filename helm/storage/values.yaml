@@ -55,24 +55,24 @@ postgresql:
               step INTEGER NOT NULL DEFAULT 60
           );
 
-          -- Таблица моделей
-          CREATE TABLE models (
+          -- Таблица с информацией о моделях
+          CREATE TABLE models_info (
               id SERIAL PRIMARY KEY,
               name VARCHAR(255) NOT NULL,
               metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
               max_stored_versions INTEGER NOT NULL DEFAULT 3,
               hyperparams_mode VARCHAR(20) NOT NULL CHECK (hyperparams_mode IN ('manual', 'optuna')),
-              status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'deactive', 'training', 'waiting')),
               active_version VARCHAR(255),
               training_start TIMESTAMP WITH TIME ZONE NOT NULL,
               training_end TIMESTAMP WITH TIME ZONE NOT NULL
           );
 
-          -- Таблица версий моделей
-          CREATE TABLE models_version (
+          -- Таблица моделей
+          CREATE TABLE models (
               id SERIAL PRIMARY KEY,
               model_data BYTEA NOT NULL,
               created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'deactive', 'training', 'waiting')),
               version VARCHAR(255) NOT NULL DEFAULT '1',
               model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
               hyperparams JSONB NOT NULL
@@ -135,3 +135,24 @@ postgresql:
           CREATE TRIGGER model_training_trigger
           AFTER INSERT OR UPDATE OF status ON models
           FOR EACH ROW EXECUTE FUNCTION notify_model_status_change();
+
+        07-primary-key.sql: |-
+          \connect ml_models
+          ALTER TABLE
+              "models_info" ADD PRIMARY KEY("id");
+          ALTER TABLE
+              "anomaly_points" ADD CONSTRAINT "anomaly_points_model_version_id_foreign" FOREIGN KEY("model_version_id") REFERENCES "models"("id");
+          ALTER TABLE
+              "anomaly_points" ADD CONSTRAINT "anomaly_points_metric_id_foreign" FOREIGN KEY("metric_id") REFERENCES "metrics"("id");
+          ALTER TABLE
+              "models_info" ADD CONSTRAINT "models_info_active_version_foreign" FOREIGN KEY("active_version") REFERENCES "models"("version");
+          ALTER TABLE
+              "anomaly_system" ADD CONSTRAINT "anomaly_system_metric_id_foreign" FOREIGN KEY("metric_id") REFERENCES "metrics"("id");
+          ALTER TABLE
+              "models_info" ADD CONSTRAINT "models_info_metric_id_foreign" FOREIGN KEY("metric_id") REFERENCES "metrics"("id");
+          ALTER TABLE
+              "features" ADD CONSTRAINT "features_model_id_foreign" FOREIGN KEY("model_id") REFERENCES "models_info"("id");
+          ALTER TABLE
+              "features" ADD CONSTRAINT "features_metric_id_foreign" FOREIGN KEY("metric_id") REFERENCES "metrics"("id");
+          ALTER TABLE
+              "models" ADD CONSTRAINT "models_model_id_foreign" FOREIGN KEY("model_id") REFERENCES "models_info"("id");

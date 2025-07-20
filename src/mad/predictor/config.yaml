@@ -70,7 +70,7 @@ mad_predictor:
           end: "2025-07-18T08:00:30Z" # БД
           step: "1m" # БД
   # none
-    - name: "requests_total"
+    - name: "requests_total_2"
       main_metric: "requests_total" # БД
       version_history: 1 # БД
       hyperparameter_mode: "manual" # БД
