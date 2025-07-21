@@ -277,7 +277,7 @@ async def process_model(queue, db_pool):
                         active_model = await conn.fetchrow("""
                             SELECT hyperparams 
                             FROM models 
-                            WHERE model_id = $1 AND status = 'active'
+                            WHERE model_id = $1 AND status = 'waiting'
                             ORDER BY created_at DESC 
                             LIMIT 1
                         """, model_id)
@@ -364,13 +364,13 @@ async def listen_for_models(queue, config, db_pool):
             
         async with db_pool.acquire() as conn:
             model = await conn.fetchrow("""
-                SELECT id, name FROM models 
+                SELECT id FROM models 
                 WHERE id = $1 AND status = 'waiting'
             """, model_id)
 
             if model:
                 await queue.put(model["id"])
-                print(f"📥 Model {model['name']} added to queue")
+                print(f"📥 Model {model['id']} added to queue")
             else:
                 print(f"⏭ Model {model_id} is inactive or not found")
 

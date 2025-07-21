@@ -38,6 +38,9 @@ postgresql:
           CREATE ROLE mad WITH LOGIN PASSWORD '${MAD_PASSWORD}';
           GRANT CONNECT ON DATABASE grafana TO grafana;
           GRANT ALL PRIVILEGES ON DATABASE ml_models TO mad;
+          GRANT USAGE ON SCHEMA public TO mad;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mad;
+          GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mad;
 
         03-ml-models-init.sql: |-
           \connect ml_models
