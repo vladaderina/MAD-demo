@@ -49,16 +49,16 @@ postgresql:
           -- Таблица метрик
           CREATE TABLE metrics (
               id SERIAL PRIMARY KEY,
-              name VARCHAR(255) NOT NULL,
+              name VARCHAR(255) NOT NULL UNIQUE,
               status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'deactive')),
-              query TEXT NOT NULL,
+              query TEXT NOT NULL UNIQUE,
               step INTEGER NOT NULL DEFAULT 60
           );
 
           -- Таблица с информацией о моделях
           CREATE TABLE models_info (
               id SERIAL PRIMARY KEY,
-              name VARCHAR(255) NOT NULL,
+              name VARCHAR(255) NOT NULL UNIQUE,
               metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
               max_stored_versions INTEGER NOT NULL DEFAULT 3,
               hyperparams_mode VARCHAR(20) NOT NULL CHECK (hyperparams_mode IN ('manual', 'optuna')),
@@ -70,12 +70,12 @@ postgresql:
           -- Таблица моделей
           CREATE TABLE models (
               id SERIAL PRIMARY KEY,
-              model_data BYTEA NOT NULL,
-              created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              model_data BYTEA,
+              created_at TIMESTAMP WITH TIME ZONE,
               status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'deactive', 'training', 'waiting')),
               version VARCHAR(255) NOT NULL DEFAULT '1',
               model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
-              hyperparams JSONB NOT NULL
+              hyperparams JSONB
           );
 
           -- Таблица аномальных точек

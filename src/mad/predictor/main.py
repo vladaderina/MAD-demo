@@ -145,137 +145,165 @@ async def train_lstm_model(dataframe: pd.DataFrame, model_config: dict):
     }
 
 # === 4. Сохранение модели ===
-async def save_model(model_name: str, model, model_info, db_pool):
+async def save_model(
+    model_id: int,
+    model: object,
+    model_info: dict,
+    db_pool
+) -> None:
     """
-    Сохраняет модель и все связанные параметры в базу данных
+    Saves the model and all related parameters to the database according to the new schema
     """
     async with db_pool.acquire() as conn:
-        # Получаем ID модели
-        model_id = await conn.fetchval("""
-            SELECT id FROM models WHERE name = $1
-        """, model_name)
-        print("1")
-        if not model_id:
-            # Создаем новую модель если не существует
-            model_id = await conn.fetchval("""
-                INSERT INTO models(
-                    name, 
-                    max_stored_versions, 
-                    hyperparams_mode, 
-                    status, 
-                    active_version,
-                    training_start,
-                    training_end
-                )
-                VALUES($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id
-            """, 
-            model_name,
-            5,  # default max_stored_versions
-            "manual",  # или "optuna" в зависимости от конфига
-            "active",
-            "1.0",
-            datetime.now(timezone.utc),
-            datetime.now(timezone.utc))
-        print("2")
-        # Сериализация модели и scaler
-        model_data = pickle.dumps({
-            'model': model,
-            'scaler': model_info['scaler'],
-            'window_size': model_info['window_size']
-        })
+        try:
+            # Start transaction
+            async with conn.transaction():
+                # Get the next version number
+                version = await conn.fetchval("""
+                    SELECT COALESCE(MAX(version::integer), 0) + 1 
+                    FROM models 
+                    WHERE model_id = $1
+                """, model_id)
+                
+                print(f"📦 Saving model {model_id} as version {version}")
+                
+                # Serialize model, scaler and related data
+                model_data = pickle.dumps({
+                    'model': model,
+                    'scaler': model_info['scaler'],
+                    'window_size': model_info['window_size']
+                })
+                
+                # Save new model version
+                await conn.execute("""
+                    INSERT INTO models (
+                        model_id,
+                        model_data,
+                        status,
+                        version,
+                        hyperparams,
+                        created_at
+                    ) VALUES ($1, $2, 'active', $3, $4, NOW())
+                """, 
+                model_id,
+                model_data,
+                str(version),
+                json.dumps(model_info['config']))
+                
+                print(f"💾 Saved model {model_id} version {version}")
+                
+                # Update active version in models_info if this is the first version
+                if version == 1:
+                    await conn.execute("""
+                        UPDATE models_info
+                        SET active_version = $1
+                        WHERE id = $2
+                    """, str(version), model_id)
+                
+                # Clean up old versions if exceeding max_stored_versions
+                await conn.execute("""
+                    DELETE FROM models 
+                    WHERE id IN (
+                        SELECT id FROM models 
+                        WHERE model_id = $1 
+                        AND id NOT IN (
+                            SELECT id FROM models 
+                            WHERE model_id = $1 
+                            ORDER BY created_at DESC 
+                            LIMIT (SELECT max_stored_versions FROM models_info WHERE id = $1)
+                        )
+                    )
+                """, model_id)
+                
+                print(f"🧹 Cleaned up old versions for model {model_id}")
         
-        # Сохранение версии модели
-        await conn.execute("""
-            INSERT INTO models_version(
-                model_data, 
-                version, 
-                model_id, 
-                hyperparams
-            )
-            VALUES($1, $2, $3, $4)
-        """, 
-        model_data,
-        "1.0",  # Можно реализовать логику версионирования
-        model_id,
-        json.dumps(model_info['config']))
+        except Exception as e:
+            print(f"❌ Failed to save model {model_id}: {str(e)}")
+            raise
 
 # === 5. Обработка модели из очереди ===
 async def process_model(queue, db_pool):
     while True:
         model_id = await queue.get()
         print(f"🚀 Start processing model with ID: {model_id}")
-        print("3")
+        
         async with db_pool.acquire() as conn:
             try:
-                # Начинаем транзакцию
+                # Start transaction
                 async with conn.transaction():
-                    # Получаем информацию о модели и обновляем статус на 'training'
-                    model = await conn.fetchrow("""
-                        UPDATE models 
-                        SET status = 'training' 
+                    # Get model info and update status to 'training'
+                    model_info = await conn.fetchrow("""
+                        UPDATE models_info 
+                        SET status = 'training'
                         WHERE id = $1 
                         RETURNING id, name, metric_id, hyperparams_mode, 
-                                    training_start, training_end
+                                  training_start, training_end, status
                     """, model_id)
-                    print("4")
-                    if not model:
-                        print(f"⏭ Model {model_id} not found")
+                    
+                    if not model_info:
+                        print(f"⏭ Model info {model_id} not found")
                         continue
                     
-                    # Получаем основную метрику
+                    # Get main metric
                     main_metric = await conn.fetchrow("""
                         SELECT id, name, query, step 
                         FROM metrics 
                         WHERE id = $1 AND status = 'active'
-                    """, model['metric_id'])
-                    print("5")
+                    """, model_info['metric_id'])
+                    
                     if not main_metric:
-                        print(f"⏭ Main metric for model {model['name']} not found or inactive")
-                        await conn.execute("UPDATE models SET status = 'deactive' WHERE id = $1", model_id)
+                        print(f"⏭ Main metric for model {model_info['name']} not found or inactive")
+                        await conn.execute("""
+                            UPDATE models_info 
+                            SET status = 'deactive' 
+                            WHERE id = $1
+                        """, model_id)
                         continue
-                    print("6")
-                    # Получаем связанные метрики (фичи)
+                    
+                    # Get related features (metrics)
                     features = await conn.fetch("""
                         SELECT m.id, m.name, m.query, m.step 
                         FROM features f
                         JOIN metrics m ON f.metric_id = m.id
                         WHERE f.model_id = $1 AND m.status = 'active'
                     """, model_id)
-                    print("7")
-                    # Формируем список всех метрик (основная + фичи)
+                    
+                    # Combine all metrics (main + features)
                     all_metrics = [main_metric] + [dict(f) for f in features]
-                    print("8")
-                    # Получаем параметры модели
+                    
+                    # Get manual parameters if needed
                     manual_params = {}
-                    if model['hyperparams_mode'] == 'manual':
-                        manual_params = await conn.fetchrow("""
-                            SELECT * FROM models_version 
-                            WHERE model_id = $1 AND is_active = true
+                    if model_info['hyperparams_mode'] == 'manual':
+                        active_model = await conn.fetchrow("""
+                            SELECT hyperparams 
+                            FROM models 
+                            WHERE model_id = $1 AND status = 'active'
+                            ORDER BY created_at DESC 
+                            LIMIT 1
                         """, model_id)
-                        manual_params = dict(manual_params) if manual_params else {}
-                    print("9")
-                    # Получаем данные для всех метрик
+                        manual_params = dict(active_model['hyperparams']) if active_model else {}
+                    
+                    # Get data for all metrics
                     metric_data = []
                     for metric in all_metrics:
                         data = await fetch_metric_data(
                             metric['query'],
                             metric['step'],
-                            model['training_start'],
-                            model['training_end'],
+                            model_info['training_start'],
+                            model_info['training_end'],
                             db_pool
                         )
                         metric_data.append(data)
                     
-                    # Обучаем модель
+                    # Train model
                     training_result = await train_lstm_model(
                         metric_data,
                         manual_params
                     )
-                    print("10")
-                    # Сохраняем модель
+                    
+                    # Save the model (creates new entry in models table)
                     await save_model(
-                        model['id'],
+                        model_id,
                         training_result["model"],
                         {
                             "config": training_result["config"],
@@ -284,25 +312,25 @@ async def process_model(queue, db_pool):
                         },
                         db_pool
                     )
-                    print("11")
-                    # Обновляем статус модели на 'active'
+                    
+                    # Update model info status and active version
                     await conn.execute("""
-                        UPDATE models 
+                        UPDATE models_info 
                         SET status = 'active', 
                             active_version = $2,
                             training_start = NOW(),
                             training_end = NOW()
                         WHERE id = $1
                     """, model_id, str(training_result["version"]))
-                    print("12")
-                    print(f"✅ Model {model['name']} (ID: {model_id}) successfully trained and saved")
+                    
+                    print(f"✅ Model {model_info['name']} (ID: {model_id}) successfully trained and saved")
             
             except Exception as e:
                 print(f"❌ Error processing model {model_id}: {str(e)}")
-                # В случае ошибки возвращаем модель в статус 'active' или 'waiting'
+                # On error, revert status appropriately
                 try:
                     await conn.execute("""
-                        UPDATE models 
+                        UPDATE models_info 
                         SET status = CASE 
                             WHEN status = 'training' THEN 'active' 
                             ELSE status 
