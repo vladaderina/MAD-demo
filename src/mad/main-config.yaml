@@ -1,5 +1,5 @@
 system:
-  log_path: "/logs/anomaly_detection.log" # HELM
+  log_path: "./anomaly_detection.log" # HELM
   alerting: true # HELM
   victoriametrics_url: "http://80.93.60.49:30429/api/v1"  # ПС
   db_conn_string: "postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models"  # ПС
@@ -7,19 +7,22 @@ system:
 metrics:
   - name: "requests_total" # БД
     query: 'vm_http_requests_total{path="/api/v1/query_range"}' # БД
+    interpolation: "linear" # БД
     exclude_periods:
       - start: "2023-05-10T12:00:00Z" # БД
         end: "2023-05-10T14:30:00Z" # БД
         reason: "Технические работы" # БД
+        anomaly_type: "global"
       - start: "2023-05-15T09:00:00Z" # БД
         end: "2023-05-15T11:45:00Z" # БД
         reason: "Сбой в системе" # БД
-  - name: "requests_total_2" # БД
-    query: 'vm_http_requests_total{path="/api/v1/query_range"}' # БД
+        anomaly_type: "local"
+  - name: "cpu_utilization" # БД
+    query: 'vm_http_requests_total{path="/api/v1"}' # БД
 
 mad_predictor:
   # none
-  optuna_tuning: 
+  optuna_tuning:
     direction: "minimize"
     metric: "val_loss"
     n_trials: 20
@@ -54,7 +57,7 @@ mad_predictor:
       validation_split: 0.2
   # none
   models:
-    - name: "requests_total" # БД
+    - name: "requests_total_hard" # БД
       main_metric: "requests_total" # БД
       additional_metrics:
         - "cpu_utilization"  # БД
@@ -67,10 +70,10 @@ mad_predictor:
       training_period:
         fixed_range:
           start: "2025-07-18T07:28:03Z" # БД
-          end: "2025-07-18T08:00:30Z" # БД
+          end: "2025-07-29T08:00:30Z" # БД
           step: "1m" # БД
   # none
-    - name: "requests_total_2"
+    - name: "requests_total_easy"
       main_metric: "requests_total" # БД
       version_history: 1 # БД
       hyperparameter_mode: "manual" # БД
@@ -92,6 +95,7 @@ mad_predictor:
         loss: "mean_squared_error"
         optimizer: "adam"
         validation_split: 0.2
+        window_size: 24
       # БД
       retrain:
         enabled: true # HELM
@@ -99,17 +103,15 @@ mad_predictor:
         interval: "12h" # HELM
       training_period:
         auto_range:
-          lookback_period: "20m" # none
+          lookback_period: "8d" # none
           step: "1m" # none
 
 mad_detector:
   points_anomaly:
     - query: requests_total # HELM
       delta_threshold: "auto" # HELM
-      interpolation: "linear" # HELM
     - query: requests_total_2 # HELM
       delta_threshold: 65 # HELM
-      interpolation: "linear" # HELM
   system_anomaly:
     percentile_threshold: 0.95 # none - params DB
     min_confirmations:

@@ -1,0 +1,123 @@
+system:
+  log_path: "./anomaly_detection.log"
+  alerting: true
+  victoriametrics_url: ""
+  db_conn_string: ""
+
+metrics:
+  - name: "requests_total"
+    query: 'vm_http_requests_total{path="/api/v1/query_range"}'
+    interpolation: "linear"
+    exclude_periods:
+      - start: "2023-05-10T12:00:00Z"
+        end: "2023-05-10T14:30:00Z"
+        reason: "Технические работы"
+        anomaly_type: "global"
+      - start: "2023-05-15T09:00:00Z"
+        end: "2023-05-15T11:45:00Z"
+        reason: "Сбой в системе"
+        anomaly_type: "local"
+  - name: "cpu_utilization"
+    query: 'vm_http_requests_total{path="/api/v1"}'
+
+mad_predictor:
+  optuna_tuning:
+    direction: "minimize"
+    metric: "val_loss"
+    n_trials: 20
+    sampler: "TPE"
+    pruner: "Hyperband"
+    hyperparameter_ranges:
+      layers:
+        - type: "LSTM"
+          units:
+            min: 32
+            max: 256
+            step: 32
+          return_sequences: [True, False]
+        - type: "Dense"
+          units:
+            min: 1
+            max: 64
+      learning_rate:
+        min: 0.0001
+        max: 0.01
+        log: true
+      batch_size: [16, 32, 64, 128]
+      dropout:
+        min: 0.1
+        max: 0.5
+      epochs:
+        min: 10
+        max: 100
+    fixed_parameters:
+      loss: "mean_squared_error"
+      optimizer: "adam"
+      validation_split: 0.2
+  models:
+    - name: "requests_total_hard"
+      main_metric: "requests_total"
+      additional_metrics:
+        - "cpu_utilization"
+      version_history: 5
+      hyperparameter_mode: "optuna"
+      retrain:
+        enabled: true
+        strategy: "sliding_window"
+        interval: "7d"
+      training_period:
+        fixed_range:
+          start: "2025-07-29T07:28:03Z"
+          end: "2025-07-18T08:00:30Z"
+          step: "1m"
+  # none
+    - name: "requests_total_easy"
+      main_metric: "requests_total"
+      version_history: 1
+      hyperparameter_mode: "manual"
+      # БД
+      manual_params:
+        layers:
+          - type: "LSTM"
+            units: 64
+            return_sequences: True
+          - type: "LSTM"
+            units: 32
+            return_sequences: False
+          - type: "Dense"
+            units: 1
+        learning_rate: 0.001
+        batch_size: 32
+        dropout: 0.2
+        epochs: 50
+        loss: "mean_squared_error"
+        optimizer: "adam"
+        validation_split: 0.2
+        window_size: 24
+
+      retrain:
+        enabled: true
+        strategy: "expanding_window"
+        interval: "12h"
+      training_period:
+        auto_range:
+          lookback_period: "20m"
+          step: "1m"
+
+mad_detector:
+  points_anomaly:
+    - query: requests_total
+      delta_threshold: "auto"
+    - query: requests_total_2
+      delta_threshold: 65
+  system_anomaly:
+    percentile_threshold: 0.95
+    min_confirmations:
+      group_anomaly: 20
+      local_anomaly: 3
+      global_anomaly: 1
+
+mad_notifier:
+  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
+  chat_id: "YOUR_TELEGRAM_CHAT_ID"
+  message_template: "Обнаружена аномалия! Метрика: {metric}, Время: {timestamp}, Значение: {value}"

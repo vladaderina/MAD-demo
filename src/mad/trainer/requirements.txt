@@ -8,3 +8,4 @@ sqlalchemy
 asyncpg
 uvicorn
 fastapi
+optuna

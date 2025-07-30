@@ -11,3 +11,13 @@ terraform/.terraform.lock.hcl
 terraform/.terraform.d/
 terraform/.terraform/
 terraform/.onlineboutique/
+src/mad/main-config.yaml
+src/mad/predictor/config_minimal.yaml
+src/mad/predictor/config.yaml
+src/mad/notifier/config.yaml
+src/mad/detector/config.yaml
+src/mad/db-maintainer/config.yaml
+src/mad/api/config.yaml
+src/mad/predictor/anomaly_detection.log
+src/mad/db-maintainer/anomaly_detection.log
+src/mad/detector/anomaly_detection.log
