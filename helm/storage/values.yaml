@@ -117,14 +117,7 @@ postgresql:
               metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
               PRIMARY KEY (model_id, metric_id)
           );
-
-          -- 8. Таблица шаблонов оповещений
-          CREATE TABLE IF NOT EXISTS alert_templates (
-              id SERIAL PRIMARY KEY,
-              type VARCHAR(20) NOT NULL CHECK (type IN ('local', 'group', 'global')),
-              message VARCHAR(255) NOT NULL
-          );
-        
+       
         05-create-indexes.sql: |-
           \connect ml_models
           CREATE INDEX idx_metrics_status ON metrics (status);

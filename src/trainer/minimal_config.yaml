@@ -1,0 +1,7 @@
+mad_trainer:
+  models:
+    - name: "default_model"
+      hyperparameter_mode: "optuna"
+      retrain:
+        enabled: true
+        interval: "24h"

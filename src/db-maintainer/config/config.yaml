@@ -1,0 +1,36 @@
+metrics:
+  - name: "requests_total" # БД
+    query: 'vm_http_requests_total{path="/api/v1/query_range"}' # БД
+    interpolation: "linear" # БД
+    exclude_periods:
+      - start: "2023-05-10T12:00:00Z" # БД
+        end: "2023-05-10T14:30:00Z" # БД
+        reason: "Технические работы" # БД
+        anomaly_type: "global"
+      - start: "2023-05-15T09:00:00Z" # БД
+        end: "2023-05-15T11:45:00Z" # БД
+        reason: "Сбой в системе" # БД
+        anomaly_type: "local"
+  - name: "cpu_utilization" # БД
+    query: 'vm_http_requests_total{path="/api/v1"}' # БД
+
+mad_trainer:
+  models:
+    - name: "requests_total_hard" # БД
+      main_metric: "requests_total" # БД
+      additional_metrics:
+        - "cpu_utilization"  # БД
+      version_history: 5 # БД
+      hyperparameter_mode: "optuna" # БД
+      retrain:
+        enabled: true # HELM
+        strategy: "sliding_window" # HELM
+        interval: "7d" # HELM
+      training_period:
+        fixed_range:
+          start: "2025-07-18T07:28:03Z" # БД
+          end: "2025-07-29T08:00:30Z" # БД
+          step: "1m" # БД
+
+system:
+  points_retention: "90d"  # Увеличиваем период хранения данных

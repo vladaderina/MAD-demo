@@ -1,0 +1,6 @@
+apiVersion: v2
+name: onlineboutique
+description: A Helm chart for Kubernetes for Online Boutique
+type: application
+version: 0.10.2
+appVersion: "v0.10.2"
