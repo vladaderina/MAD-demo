@@ -14,7 +14,7 @@ metrics:
   - name: "cpu_utilization" # БД
     query: 'vm_http_requests_total{path="/api/v1"}' # БД
 
-mad_trainer:
+trainer:
   models:
     - name: "requests_total_hard" # БД
       main_metric: "requests_total" # БД

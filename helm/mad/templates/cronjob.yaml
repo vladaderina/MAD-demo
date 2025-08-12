@@ -1,0 +1,38 @@
+{{- if .Values.mad_trainer.models }}
+{{- range $model := .Values.mad_trainer.models }}
+{{- if $model.retrain.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "retrain-scheduler.name" $ }}-{{ $model.name | kebabcase }}
+  labels:
+    {{- include "retrain-scheduler.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: retrain-scheduler
+    app.kubernetes.io/model: {{ $model.name | quote }}
+spec:
+  schedule: {{ include "retrain.cronSchedule" $model.retrain.interval | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: retrain-scheduler
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["python", "-m", "retrain_scheduler"]
+              args:
+                - "--model-name={{ $model.name }}"
+                - "--metric-name={{ $model.main_metric }}"
+                - "--interval={{ $model.retrain.interval }}"
+                - "--strategy={{ $model.retrain.strategy }}"
+              envFrom:
+                - secretRef:
+                    name: {{ .Release.Name }}-db-secret
+              env:
+                - name: TRAINER_API_URL
+                  value: {{- include "serviceFQDN" (dict "name" "trainer") | nindent 10 }}
+          restartPolicy: OnFailure
+{{- end }}
+{{- end }}
+{{- end }}

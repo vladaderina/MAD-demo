@@ -45,8 +45,8 @@ class AnomalyDetectionService:
                 config = yaml.safe_load(f) or {}
                 
             # Валидация обязательных параметров
-            if 'mad_detector' not in config:
-                raise ValueError("Отсутствует обязательный раздел конфига: mad_detector")
+            if 'detector' not in config:
+                raise ValueError("Отсутствует обязательный раздел конфига: detector")
                 
             return config
         except FileNotFoundError:
@@ -126,9 +126,9 @@ class AnomalyDetectionService:
         
         # Параметры для определения аномалий
         self.anomaly_params = {
-            'local': self.config['mad_detector']['system_anomaly']['min_confirmations']['local_anomaly'],
-            'group': self.config['mad_detector']['system_anomaly']['min_confirmations']['group_anomaly'],
-            'global': self.config['mad_detector']['system_anomaly']['min_confirmations']['global_anomaly']
+            'local': self.config['detector']['system_anomaly']['min_confirmations']['local_anomaly'],
+            'group': self.config['detector']['system_anomaly']['min_confirmations']['group_anomaly'],
+            'global': self.config['detector']['system_anomaly']['min_confirmations']['global_anomaly']
         }
     
     async def _notify_anomaly(self, anomaly_data: Dict) -> None:

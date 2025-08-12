@@ -22,7 +22,7 @@ metrics:
   - name: "cpu_utilization"
     query: 'vm_http_requests_total{path="/api/v1"}'
 
-mad_trainer:
+trainer:
   # none
   optuna_tuning:
     direction: "minimize"
@@ -108,7 +108,7 @@ mad_trainer:
           lookback_period: "8d" # none
           step: "1m" # none
 
-mad_detector:
+detector:
   points_anomaly:
     - query: requests_total # HELM
       delta_threshold: "auto" # HELM
@@ -121,7 +121,7 @@ mad_detector:
       local_anomaly: 3 # none - params DB
       global_anomaly: 1 # none - params DB
 
-mad_notifier:
+notifier:
   debug: true
   bot_token: "8321832688:AAHUdj07n8F-njo1xoD3YtcnQiGk4rqjoMY" # ПС
   chat_id: "-1002649706035" # ПС

@@ -85,7 +85,7 @@ class ModelTrainer:
         """Загрузка конфигурации из файла и переменных окружения."""
         config = {
             'system': {},
-            'mad_predictor': {'models': []}
+            'predictor': {'models': []}
         }
         
         # Загрузка из файла конфига, если он указан
@@ -610,7 +610,7 @@ class ModelTrainer:
     def _get_model_config(self, model_name: str) -> Optional[Dict]:
         """Получение конфигурации модели по имени."""
         return next(
-            (m for m in self.config.get('mad_predictor', {}).get('models', []) 
+            (m for m in self.config.get('predictor', {}).get('models', []) 
              if m['name'] == model_name),
             None
         )

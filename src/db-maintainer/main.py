@@ -81,9 +81,9 @@ class DatabaseManager:
             config = self._deep_merge(default_config, user_config)
             
             # Применяем дефолты для моделей
-            if 'mad_trainer' in config and 'models' in config['mad_trainer']:
+            if 'trainer' in config and 'models' in config['trainer']:
                 model_defaults = config.get('defaults', {}).get('model', {})
-                for model in config['mad_trainer']['models']:
+                for model in config['trainer']['models']:
                     self._apply_model_defaults(model, model_defaults)
             
             return config
@@ -113,7 +113,7 @@ class DatabaseManager:
         if not self.config.get('metrics'):
             self.logger.warning("Конфигурация не содержит метрик")
         
-        if not self.config.get('mad_trainer', {}).get('models'):
+        if not self.config.get('trainer', {}).get('models'):
             self.logger.warning("Конфигурация не содержит моделей")
 
     def _init_db_connection(self) -> 'psycopg2.connection':
@@ -237,7 +237,7 @@ class DatabaseManager:
 
     def init_database(self) -> None:
         """Инициализация структуры базы данных."""
-        if not self.config.get('metrics') or not self.config.get('mad_trainer', {}).get('models'):
+        if not self.config.get('metrics') or not self.config.get('trainer', {}).get('models'):
             raise ValueError("Конфигурация должна содержать метрики и модели")
         
         self.logger.info("Начало инициализации БД")
@@ -296,7 +296,7 @@ class DatabaseManager:
                 """)
                 
                 # Добавление моделей (упрощенная версия)
-                for model in self.config['mad_trainer']['models']:
+                for model in self.config['trainer']['models']:
                     # Получаем ID основной метрики
                     cursor.execute(
                         "SELECT id FROM metrics WHERE name = %s",

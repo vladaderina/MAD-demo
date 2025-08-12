@@ -1,4 +1,4 @@
-mad_trainer:
+trainer:
   models:
     - name: "default_model"
       hyperparameter_mode: "optuna"

@@ -1,30 +1,42 @@
-system:
-  log_path: "./anomaly_detection.log" # HELM
-  config_path: "./minimal_config.yaml"
-  alerting: true # HELM
-  victoriametrics_url: "http://80.93.60.49:30429/api/v1"  # ПС
-  notifier_service_url: "http://localhost:8001"
-  db_conn_string: "postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models"  # ПС
+image:
+  repository: your-registry/retrain-scheduler
+  tag: latest
+  pullPolicy: IfNotPresent
 
+general:
+  victoriametrics_url: "http://80.93.60.49:30429/api/v1" # VICTORIAMETRICS_URL trainer/detector
+  db_conn_string: "postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models" # DB_CONN_STRING api/maintainer/detector/trainer
+  log_path: "./anomaly_detection.log" # LOG_PATH всем
+  ports:
+    notifier: "8000" # NOTIFIER_SERVICE_URL detector
+    trainer: "8001" # TRAINER_API_URL trainer/scheduler
+    detector: "8002" # DETECTOR_API_URL trainer
+
+# config maintainer
 metrics:
-  - name: "requests_total" # БД
-    query: 'vm_http_requests_total{path="/api/v1/query_range"}' # БД
-    interpolation: "linear" # БД
+  - name: "requests_total"
+    query: 'vm_http_requests_total{path="/api/v1/query_range"}'
+    interpolation: "linear"
     exclude_periods:
-      - start: "2023-05-10T12:00:00Z" # БД
-        end: "2023-05-10T14:30:00Z" # БД
-        reason: "Технические работы" # БД
+      - start: "2023-05-10T12:00:00Z"
+        end: "2023-05-10T14:30:00Z"
+        reason: "Технические работы"
         anomaly_type: "global"
-      - start: "2023-05-15T09:00:00Z" # БД
-        end: "2023-05-15T11:45:00Z" # БД
-        reason: "Сбой в системе" # БД
+      - start: "2023-05-15T09:00:00Z"
+        end: "2023-05-15T11:45:00Z"
+        reason: "Сбой в системе"
         anomaly_type: "local"
-  - name: "cpu_utilization" # БД
-    query: 'vm_http_requests_total{path="/api/v1"}' # БД
+  - name: "cpu_utilization"
+    query: 'vm_http_requests_total{path="/api/v1"}'
+###### config maintainer
 
-mad_trainer:
-  workers: "3"
-  # none
+notifier:
+  debug: true # DEBUG notify
+  bot_token: "" # TELEGRAM_BOT_TOKEN notify
+  chat_id: "" # TELEGRAM_CHAT_ID notify
+
+# config trainer
+trainer:
   optuna_tuning:
     direction: "minimize"
     metric: "val_loss"
@@ -58,29 +70,27 @@ mad_trainer:
       loss: "mean_squared_error"
       optimizer: "adam"
       validation_split: 0.2
-  # none
+  # config maintainer
   models:
-    - name: "requests_total_hard" # БД
-      main_metric: "requests_total" # БД
+    - name: "requests_total_hard"
+      main_metric: "requests_total"
       additional_metrics:
-        - "cpu_utilization"  # БД
-      version_history: 5 # БД
-      hyperparameter_mode: "optuna" # БД
+        - "cpu_utilization"
+      version_history: 5
+      hyperparameter_mode: "optuna"
       retrain:
-        enabled: true # HELM
-        strategy: "sliding_window" # HELM
-        interval: "7d" # HELM
+        enabled: true
+        strategy: "sliding_window"
+        interval: "7d"
       training_period:
         fixed_range:
-          start: "2025-07-18T07:28:03Z" # БД
-          end: "2025-07-29T08:00:30Z" # БД
-          step: "1m" # БД
-  # none
+          start: "2025-07-18T07:28:03Z"
+          end: "2025-07-29T08:00:30Z"
+          step: "1m"
     - name: "requests_total_easy"
-      main_metric: "requests_total" # БД
-      version_history: 1 # БД
-      hyperparameter_mode: "manual" # БД
-      # БД
+      main_metric: "requests_total"
+      version_history: 1
+      hyperparameter_mode: "manual"
       manual_params:
         layers:
           - type: "LSTM"
@@ -99,21 +109,18 @@ mad_trainer:
         optimizer: "adam"
         validation_split: 0.2
         window_size: 24
-      # БД
       retrain:
-        enabled: true # HELM
-        strategy: "expanding_window" # HELM
-        interval: "12h" # HELM
+        enabled: true
+        strategy: "expanding_window"
+        interval: "12h"
       training_period:
         auto_range:
-          lookback_period: "8d" # none
-          step: "1m" # none
+          lookback_period: "8d"
+          step: "1m"
+###### config trainer
+###### config maintainer
 
-mad_sheduler:
-
-
-mad_detector:
-  workers: "4"
+detector:
   points_anomaly:
     - query: requests_total # HELM
       delta_threshold: "auto" # HELM
@@ -125,8 +132,3 @@ mad_detector:
       group_anomaly: 20 # none - params DB
       local_anomaly: 3 # none - params DB
       global_anomaly: 1 # none - params DB
-
-mad_notifier:
-  debug: true
-  bot_token: "" # ПС
-  chat_id: "" # ПС
