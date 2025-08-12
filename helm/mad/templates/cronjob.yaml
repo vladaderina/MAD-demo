@@ -1,5 +1,7 @@
-{{- if .Values.mad_trainer.models }}
-{{- range $model := .Values.mad_trainer.models }}
+
+---
+{{- if .Values.mad-trainer.models }}
+{{- range $model := .Values.mad-trainer.models }}
 {{- if $model.retrain.enabled }}
 apiVersion: batch/v1
 kind: CronJob
@@ -18,8 +20,8 @@ spec:
         spec:
           containers:
             - name: retrain-scheduler
-              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              image: "{{ .Values.mad-scheduler.repository }}:{{ .Values.mad-scheduler.tag }}"
+              imagePullPolicy: {{ .Values.general.pullPolicy }}
               command: ["python", "-m", "retrain_scheduler"]
               args:
                 - "--model-name={{ $model.name }}"
@@ -31,7 +33,7 @@ spec:
                     name: {{ .Release.Name }}-db-secret
               env:
                 - name: TRAINER_API_URL
-                  value: {{- include "serviceFQDN" (dict "name" "trainer") | nindent 10 }}
+                  value: {{- include "serviceFQDN" (dict "name" "mad-trainer") | nindent 10 }}
           restartPolicy: OnFailure
 {{- end }}
 {{- end }}

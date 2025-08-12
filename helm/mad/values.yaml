@@ -1,76 +1,26 @@
-image:
-  repository: your-registry/retrain-scheduler
-  tag: latest
-  pullPolicy: IfNotPresent
-
 general:
   victoriametrics_url: "http://80.93.60.49:30429/api/v1" # VICTORIAMETRICS_URL trainer/detector
   db_conn_string: "postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models" # DB_CONN_STRING api/maintainer/detector/trainer
   log_path: "./anomaly_detection.log" # LOG_PATH всем
-  ports:
-    notifier: "8000" # NOTIFIER_SERVICE_URL detector
-    trainer: "8001" # TRAINER_API_URL trainer/scheduler
-    detector: "8002" # DETECTOR_API_URL trainer
-
-# config maintainer
-metrics:
-  - name: "requests_total"
-    query: 'vm_http_requests_total{path="/api/v1/query_range"}'
-    interpolation: "linear"
-    exclude_periods:
-      - start: "2023-05-10T12:00:00Z"
-        end: "2023-05-10T14:30:00Z"
-        reason: "Технические работы"
-        anomaly_type: "global"
-      - start: "2023-05-15T09:00:00Z"
-        end: "2023-05-15T11:45:00Z"
-        reason: "Сбой в системе"
-        anomaly_type: "local"
-  - name: "cpu_utilization"
-    query: 'vm_http_requests_total{path="/api/v1"}'
-###### config maintainer
-
-notifier:
-  debug: true # DEBUG notify
-  bot_token: "" # TELEGRAM_BOT_TOKEN notify
-  chat_id: "" # TELEGRAM_CHAT_ID notify
-
-# config trainer
-trainer:
-  optuna_tuning:
-    direction: "minimize"
-    metric: "val_loss"
-    n_trials: 20
-    sampler: "TPE"
-    pruner: "Hyperband"
-    hyperparameter_ranges:
-      layers:
-        - type: "LSTM"
-          units:
-            min: 32
-            max: 256
-            step: 32
-          return_sequences: [True, False]
-        - type: "Dense"
-          units:
-            min: 1
-            max: 64
-      learning_rate:
-        min: 0.0001
-        max: 0.01
-        log: true
-      batch_size: [16, 32, 64, 128]
-      dropout:
-        min: 0.1
-        max: 0.5
-      epochs:
-        min: 10
-        max: 100
-    fixed_parameters:
-      loss: "mean_squared_error"
-      optimizer: "adam"
-      validation_split: 0.2
+  pullPolicy: "Always"
   # config maintainer
+  metrics:
+    - name: "requests_total"
+      query: 'vm_http_requests_total{path="/api/v1/query_range"}'
+      interpolation: "linear"
+      exclude_periods:
+        - start: "2023-05-10T12:00:00Z"
+          end: "2023-05-10T14:30:00Z"
+          reason: "Технические работы"
+          anomaly_type: "global"
+        - start: "2023-05-15T09:00:00Z"
+          end: "2023-05-15T11:45:00Z"
+          reason: "Сбой в системе"
+          anomaly_type: "local"
+    - name: "cpu_utilization"
+      query: 'vm_http_requests_total{path="/api/v1"}'
+
+  # config trainer
   models:
     - name: "requests_total_hard"
       main_metric: "requests_total"
@@ -117,18 +67,116 @@ trainer:
         auto_range:
           lookback_period: "8d"
           step: "1m"
-###### config trainer
 ###### config maintainer
+###### config trainer
 
-detector:
-  points_anomaly:
-    - query: requests_total # HELM
-      delta_threshold: "auto" # HELM
-    - query: requests_total_2 # HELM
-      delta_threshold: 65 # HELM
-  system_anomaly:
-    percentile_threshold: 0.95 # none - params DB
-    min_confirmations:
-      group_anomaly: 20 # none - params DB
-      local_anomaly: 3 # none - params DB
-      global_anomaly: 1 # none - params DB
+mad-components:
+  mad-api:
+    image:
+      repository: "vladaderina/mad-trainer"
+      tag: "latest"
+    service:
+      type: NodePort
+      port: 30001
+      nodePort: 30001
+      targetPort: 30001
+      protocol: HTTP
+
+  mad-scheduler:
+    image:
+      repository: "vladaderina/mad-scheduler"
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 30002
+      targetPort: 30002
+      protocol: HTTP
+
+  mad-maintainer:
+    image:
+      repository: "vladaderina/mad-maintainer"
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 30003
+      targetPort: 30003
+      protocol: HTTP
+
+  # config trainer
+  mad-trainer:
+    image:
+      repository: "vladaderina/mad-trainer"
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 30004
+      targetPort: 30004
+      protocol: HTTP
+    optuna_tuning:
+      direction: "minimize"
+      metric: "val_loss"
+      n_trials: 20
+      sampler: "TPE"
+      pruner: "Hyperband"
+      hyperparameter_ranges:
+        layers:
+          - type: "LSTM"
+            units:
+              min: 32
+              max: 256
+              step: 32
+            return_sequences: [True, False]
+          - type: "Dense"
+            units:
+              min: 1
+              max: 64
+        learning_rate:
+          min: 0.0001
+          max: 0.01
+          log: true
+        batch_size: [16, 32, 64, 128]
+        dropout:
+          min: 0.1
+          max: 0.5
+        epochs:
+          min: 10
+          max: 100
+      fixed_parameters:
+        loss: "mean_squared_error"
+        optimizer: "adam"
+        validation_split: 0.2
+  ###### config trainer
+
+  mad-detector:
+    image:
+      repository: "vladaderina/mad-detector"
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 30005
+      targetPort: 30005
+      protocol: HTTP
+    points_anomaly:
+      - query: requests_total # HELM
+        delta_threshold: "auto" # HELM
+      - query: requests_total_2 # HELM
+        delta_threshold: 65 # HELM
+    system_anomaly:
+      percentile_threshold: 0.95 # none - params DB
+      min_confirmations:
+        group_anomaly: 20 # none - params DB
+        local_anomaly: 3 # none - params DB
+        global_anomaly: 1 # none - params DB
+    
+  mad-notifier:
+    image:
+      repository: "vladaderina/mad-notifier"
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 30006
+      targetPort: 30006
+      protocol: HTTP
+    debug: true # DEBUG notify
+    bot_token: "" # TELEGRAM_BOT_TOKEN notify
+    chat_id: "" # TELEGRAM_CHAT_ID notify

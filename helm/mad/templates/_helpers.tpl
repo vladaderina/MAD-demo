@@ -43,10 +43,11 @@ Create chart name and version as used by the chart label.
 {{- /* Базовый FQDN */}}
 {{- $fqdn := printf "%s.%s.svc.%s" $name $namespace $clusterDomain -}}
 
-{{- /* Автоматически определяем порт */}}
+{{- /* Автоматически определяем порт из новой структуры */}}
 {{- $port := "" -}}
-{{- if hasKey .Values.general.ports $name -}}
-  {{- $port = get .Values.general.ports $name -}}
+{{- $serviceValues := index .Values (printf "%s" $name) -}}
+{{- if $serviceValues -}}
+  {{- $port = $serviceValues.port -}}
 {{- end -}}
 
 {{- /* Добавляем порт если найден */}}

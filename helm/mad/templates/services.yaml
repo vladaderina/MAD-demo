@@ -1,15 +1,21 @@
+{{- range $name, $config := .Values.mad-components }}
+{{- if $config.service }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: vmsingle-service
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
 spec:
+  type: {{ $config.service.type }}
   ports:
-    - name: service
-      protocol: TCP
-      port: 80
-      targetPort: 8428
-      nodePort: 30429
+    - port: {{ $config.service.port }}
+      targetPort: {{ $config.service.targetPort }}
+      protocol: {{ $config.service.protocol | default "TCP" }}
+      {{- if and (eq $config.service.type "NodePort") $config.service.nodePort }}
+      nodePort: {{ $config.service.nodePort }}
+      {{- end }}
   selector:
-    app.kubernetes.io/instance: monitoring
-    app.kubernetes.io/name: stack
-  type: NodePort
+    app: {{ $name }}
+{{- end }}
+{{- end }}

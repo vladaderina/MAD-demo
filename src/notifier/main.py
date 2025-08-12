@@ -105,7 +105,7 @@ class AnomalyNotifier:
                 'port': int(os.getenv('PORT', DEFAULT_PORT)),
                 'log_path': os.getenv('LOG_PATH', DEFAULT_LOG_PATH)
             },
-            'notifier': {
+            'mad-notifier': {
                 'bot_token': os.getenv('TELEGRAM_BOT_TOKEN'),
                 'chat_id': os.getenv('TELEGRAM_CHAT_ID')
             }
@@ -116,10 +116,10 @@ class AnomalyNotifier:
 
     def _validate_config(self, config: Dict) -> None:
         """Валидация обязательных параметров конфигурации."""
-        if not config['notifier'].get('bot_token'):
+        if not config['mad-notifier'].get('bot_token'):
             raise ValueError("Необходимо указать TELEGRAM_BOT_TOKEN в переменных окружения")
         
-        if not config['notifier'].get('chat_id'):
+        if not config['mad-notifier'].get('chat_id'):
             raise ValueError("Необходимо указать TELEGRAM_CHAT_ID в переменных окружения")
 
     def _setup_logging(self) -> None:
@@ -193,8 +193,8 @@ class AnomalyNotifier:
     async def _send_telegram_message(self, text: str) -> bool:
         """Отправка сообщений в Telegram."""
         try:
-            bot_token = self.config['notifier'].get('bot_token')
-            chat_id = self.config['notifier'].get('chat_id')
+            bot_token = self.config['mad-notifier'].get('bot_token')
+            chat_id = self.config['mad-notifier'].get('chat_id')
             
             if not bot_token or not chat_id:
                 logger.error("Не указан TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID в переменных окружения")
