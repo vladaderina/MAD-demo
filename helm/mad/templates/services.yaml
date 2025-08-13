@@ -1,18 +1,19 @@
 {{- range $name, $config := .Values.mad-components }}
-{{- if $config.service }}
+{{- if and $config.service (eq $config.service.type "NodePort") }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $name }}
+  name: {{ $name }}-nodeport
   labels:
     app: {{ $name }}
 spec:
-  type: {{ $config.service.type }}
+  type: NodePort
   ports:
-    - port: {{ $config.service.port }}
+    - port: {{ $config.service.port | default $config.service.targetPort }}
       targetPort: {{ $config.service.targetPort }}
       protocol: {{ $config.service.protocol | default "TCP" }}
-      {{- if and (eq $config.service.type "NodePort") $config.service.nodePort }}
+      {{- if $config.service.nodePort }}
       nodePort: {{ $config.service.nodePort }}
       {{- end }}
   selector:

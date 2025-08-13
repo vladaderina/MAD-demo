@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mad-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mad
+      component: api
+  template:
+    metadata:
+      labels:
+        app: mad
+        component: api
+    spec:
+      containers:
+      - name: api
+        image: "{{ .Values.mad-components.mad-api.image.repository }}:{{ .Values.mad-components.mad-api.image.tag }}"
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_CONN_STRING
+          valueFrom:
+            secretKeyRef:
+              name: mad-secrets
+              key: db-conn-string
+        - name: VICTORIAMETRICS_URL
+          value: {{ .Values.general.victoriametrics_url }}
+        - name: TRAINER_SERVICE_URL
+          value: {{- include "serviceFQDN" (dict "name" "mad-trainer") | nindent 10 }}
+        - name: LOG_PATH
+          value: {{ .Values.general.log_path }}

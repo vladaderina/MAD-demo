@@ -27,11 +27,25 @@ class AnomalyAPIService:
 
     def __init__(self):
         """Инициализация сервиса."""
+        self._validate_environment()
         self._setup_logging()
         self.db_pool = None
         self.http_session = None
         self.app = web.Application()
         self._setup_routes()
+
+    def _validate_environment(self) -> None:
+        """Проверка обязательных переменных среды."""
+        required_vars = [
+            'DB_CONN_STRING',
+            'VICTORIAMETRICS_URL'
+        ]
+        
+        missing_vars = [var for var in required_vars if var not in os.environ]
+        if missing_vars:
+            raise ValueError(
+                f"Missing required environment variables: {', '.join(missing_vars)}"
+            )
 
     def _setup_logging(self) -> None:
         """Настройка системы логирования."""
@@ -86,9 +100,7 @@ class AnomalyAPIService:
 
     async def _connect_db(self) -> None:
         """Установка соединения с базой данных."""
-        db_conn_string = os.getenv('DB_CONN_STRING')
-        if not db_conn_string:
-            raise ValueError("DB_CONN_STRING environment variable is required")
+        db_conn_string = os.environ['DB_CONN_STRING']
         
         try:
             self.db_pool = await asyncpg.create_pool(db_conn_string)

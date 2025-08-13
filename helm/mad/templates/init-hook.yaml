@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: initializer
-          image: "{{ .Values.mad-maintainer.image.repository }}:{{ .Values.mad-maintainer.image.tag }}"
+          image: "{{ .Values.mad-components.mad-maintainer.image.repository }}:{{ .Values.mad-components.mad-maintainer.image.tag }}"
           imagePullPolicy: {{ .Values.general.pullPolicy | default "IfNotPresent" }}
           command: ["init"]
           envFrom:
