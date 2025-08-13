@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import yaml
 import psycopg2
-from psycopg2.extras import Json
+from psycopg2.extras import Json, RealDictCursor
 
 # Константы
 DEFAULT_LOG_PATH = '/var/log/db_manager.log'
@@ -31,7 +31,7 @@ class DatabaseManager:
 
     def _setup_logging(self) -> None:
         """Настройка системы логирования."""
-        log_path = os.getenv('LOG_PATH', DEFAULT_LOG_PATH)
+        log_path = self.config.get('general', {}).get('log_path', DEFAULT_LOG_PATH)
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         
         self.logger = logging.getLogger('DBManager')
@@ -81,10 +81,9 @@ class DatabaseManager:
             config = self._deep_merge(default_config, user_config)
             
             # Применяем дефолты для моделей
-            if 'mad-trainer' in config and 'models' in config['mad-trainer']:
-                model_defaults = config.get('defaults', {}).get('model', {})
-                for model in config['mad-trainer']['models']:
-                    self._apply_model_defaults(model, model_defaults)
+            if 'models' in config.get('general', {}):
+                for model in config['general']['models']:
+                    self._apply_model_defaults(model)
             
             return config
         except Exception as e:
@@ -100,27 +99,34 @@ class DatabaseManager:
                 base[key] = value
         return base
 
-    def _apply_model_defaults(self, model: Dict, defaults: Dict) -> None:
+    def _apply_model_defaults(self, model: Dict) -> None:
         """Применение дефолтных параметров к модели."""
-        for key, value in defaults.items():
-            if key not in model:
-                model[key] = value
-            elif isinstance(value, dict) and isinstance(model[key], dict):
-                self._apply_model_defaults(model[key], value)
+        # Дефолтные параметры для retrain
+        if 'retrain' not in model:
+            model['retrain'] = {}
+        model['retrain'].setdefault('enabled', True)
+        
+        # Дефолтные параметры для training_period
+        if 'training_period' not in model:
+            model['training_period'] = {'auto_range': {'lookback_period': '7d'}}
+        
+        # Дефолтные параметры для hyperparameter_mode
+        model.setdefault('hyperparameter_mode', 'optuna')
+        model.setdefault('version_history', 3)
 
     def _validate_config(self) -> None:
         """Проверка конфигурации."""
-        if not self.config.get('metrics'):
+        if not self.config.get('general', {}).get('metrics'):
             self.logger.warning("Конфигурация не содержит метрик")
         
-        if not self.config.get('mad-trainer', {}).get('models'):
+        if not self.config.get('general', {}).get('models'):
             self.logger.warning("Конфигурация не содержит моделей")
 
     def _init_db_connection(self) -> 'psycopg2.connection':
         """Установка соединения с PostgreSQL."""
-        conn_string = os.getenv('DB_CONN_STRING')
+        conn_string = self.config['general'].get('db_conn_string')
         if not conn_string:
-            raise ValueError("Необходимо указать DB_CONN_STRING в переменных окружения")
+            raise ValueError("Необходимо указать db_conn_string в конфигурации")
         
         try:
             conn = psycopg2.connect(**self._parse_db_conn_string(conn_string))
@@ -237,7 +243,7 @@ class DatabaseManager:
 
     def init_database(self) -> None:
         """Инициализация структуры базы данных."""
-        if not self.config.get('metrics') or not self.config.get('mad-trainer', {}).get('models'):
+        if not self.config.get('general', {}).get('metrics') or not self.config.get('general', {}).get('models'):
             raise ValueError("Конфигурация должна содержать метрики и модели")
         
         self.logger.info("Начало инициализации БД")
@@ -251,39 +257,64 @@ class DatabaseManager:
                         name VARCHAR(255) NOT NULL UNIQUE,
                         status VARCHAR(50) DEFAULT 'active',
                         query TEXT NOT NULL,
+                        interpolation VARCHAR(50),
                         created_at TIMESTAMP DEFAULT NOW()
                     )
                 """)
                 
                 # Добавление метрик
-                for metric in self.config['metrics']:
+                for metric in self.config['general']['metrics']:
                     cursor.execute(
                         """
-                        INSERT INTO metrics (name, status, query)
-                        VALUES (%s, %s, %s)
+                        INSERT INTO metrics (name, status, query, interpolation)
+                        VALUES (%s, %s, %s, %s)
                         ON CONFLICT (name) DO UPDATE 
-                        SET status = EXCLUDED.status, query = EXCLUDED.query
+                        SET status = EXCLUDED.status, 
+                            query = EXCLUDED.query,
+                            interpolation = EXCLUDED.interpolation
                         RETURNING id
                         """,
-                        (metric['name'], metric.get('status', 'active'), metric['query'])
+                        (
+                            metric['name'], 
+                            metric.get('status', 'active'), 
+                            metric['query'],
+                            metric.get('interpolation', 'linear')
+                        )
                     )
                     metric_id = cursor.fetchone()[0]
                     self._insert_exclude_periods(cursor, metric_id, metric)
                     self.logger.info(f"Добавлена метрика {metric['name']} (ID: {metric_id})")
                 
-                # Создание таблицы информации о моделях (упрощенная версия)
+                # Создание таблицы информации о моделях
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS models_info (
                         id SERIAL PRIMARY KEY,
                         name VARCHAR(255) NOT NULL UNIQUE,
-                        metric_id INTEGER REFERENCES metrics(id),
-                        max_stored_versions INTEGER DEFAULT 3,
-                        hyperparams_mode VARCHAR(50) DEFAULT 'auto',
+                        main_metric_id INTEGER REFERENCES metrics(id),
+                        version_history INTEGER DEFAULT 3,
+                        hyperparameter_mode VARCHAR(50) DEFAULT 'auto',
+                        retrain_enabled BOOLEAN DEFAULT TRUE,
+                        retrain_strategy VARCHAR(50),
+                        retrain_interval VARCHAR(50),
+                        training_period_type VARCHAR(50),
+                        training_period_start TIMESTAMP,
+                        training_period_end TIMESTAMP,
+                        training_period_step VARCHAR(50),
+                        training_period_lookback VARCHAR(50),
                         created_at TIMESTAMP DEFAULT NOW()
                     )
                 """)
                 
-                # Создание таблицы версий моделей (упрощенная версия)
+                # Создание таблицы дополнительных метрик для моделей
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS model_additional_metrics (
+                        model_id INTEGER REFERENCES models_info(id),
+                        metric_id INTEGER REFERENCES metrics(id),
+                        PRIMARY KEY (model_id, metric_id)
+                    )
+                """)
+                
+                # Создание таблицы версий моделей
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS models (
                         id SERIAL PRIMARY KEY,
@@ -295,8 +326,8 @@ class DatabaseManager:
                     )
                 """)
                 
-                # Добавление моделей (упрощенная версия)
-                for model in self.config['mad-trainer']['models']:
+                # Добавление моделей
+                for model in self.config['general']['models']:
                     # Получаем ID основной метрики
                     cursor.execute(
                         "SELECT id FROM metrics WHERE name = %s",
@@ -304,27 +335,68 @@ class DatabaseManager:
                     )
                     metric_id = cursor.fetchone()[0]
                     
-                    # Добавляем модель
+                    # Определяем параметры обучения
+                    training_period = model.get('training_period', {})
+                    training_period_type = 'fixed_range' if 'fixed_range' in training_period else 'auto_range'
+                    
+                    # Добавляем информацию о модели
                     cursor.execute(
                         """
                         INSERT INTO models_info (
-                            name, metric_id, max_stored_versions,
-                            hyperparams_mode
-                        ) VALUES (%s, %s, %s, %s)
+                            name, main_metric_id, version_history,
+                            hyperparameter_mode, retrain_enabled,
+                            retrain_strategy, retrain_interval,
+                            training_period_type, training_period_start,
+                            training_period_end, training_period_step,
+                            training_period_lookback
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (name) DO UPDATE
-                        SET metric_id = EXCLUDED.metric_id,
-                            max_stored_versions = EXCLUDED.max_stored_versions,
-                            hyperparams_mode = EXCLUDED.hyperparams_mode
+                        SET main_metric_id = EXCLUDED.main_metric_id,
+                            version_history = EXCLUDED.version_history,
+                            hyperparameter_mode = EXCLUDED.hyperparameter_mode,
+                            retrain_enabled = EXCLUDED.retrain_enabled,
+                            retrain_strategy = EXCLUDED.retrain_strategy,
+                            retrain_interval = EXCLUDED.retrain_interval,
+                            training_period_type = EXCLUDED.training_period_type,
+                            training_period_start = EXCLUDED.training_period_start,
+                            training_period_end = EXCLUDED.training_period_end,
+                            training_period_step = EXCLUDED.training_period_step,
+                            training_period_lookback = EXCLUDED.training_period_lookback
                         RETURNING id
                         """,
                         (
                             model['name'],
                             metric_id,
                             model.get('version_history', 3),
-                            model.get('hyperparameter_mode', 'auto')
+                            model.get('hyperparameter_mode', 'optuna'),
+                            model.get('retrain', {}).get('enabled', True),
+                            model.get('retrain', {}).get('strategy'),
+                            model.get('retrain', {}).get('interval'),
+                            training_period_type,
+                            training_period.get('fixed_range', {}).get('start'),
+                            training_period.get('fixed_range', {}).get('end'),
+                            training_period.get('fixed_range', {}).get('step'),
+                            training_period.get('auto_range', {}).get('lookback_period')
                         )
                     )
                     model_id = cursor.fetchone()[0]
+                    
+                    # Добавляем дополнительные метрики
+                    for metric_name in model.get('additional_metrics', []):
+                        cursor.execute(
+                            "SELECT id FROM metrics WHERE name = %s",
+                            (metric_name,)
+                        )
+                        additional_metric_id = cursor.fetchone()[0]
+                        
+                        cursor.execute(
+                            """
+                            INSERT INTO model_additional_metrics (model_id, metric_id)
+                            VALUES (%s, %s)
+                            ON CONFLICT DO NOTHING
+                            """,
+                            (model_id, additional_metric_id)
+                        )
                     
                     # Добавляем начальную версию модели
                     hyperparams = self._get_hyperparams(model)
@@ -338,6 +410,66 @@ class DatabaseManager:
                     )
                     
                     self.logger.info(f"Добавлена модель {model['name']} (ID: {model_id})")
+                
+                # Создаем таблицу для настроек детектора
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS detector_settings (
+                        id SERIAL PRIMARY KEY,
+                        metric_id INTEGER REFERENCES metrics(id),
+                        delta_threshold VARCHAR(50),
+                        median_window VARCHAR(50),
+                        percentile_threshold FLOAT,
+                        group_anomaly_confirmations INTEGER,
+                        local_anomaly_confirmations INTEGER,
+                        global_anomaly_confirmations INTEGER,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        UNIQUE(metric_id)
+                    )
+                """)
+                
+                # Добавляем настройки детектора
+                if 'mad-detector' in self.config.get('mad-components', {}):
+                    detector_config = self.config['mad-components']['mad-detector']
+                    system_anomaly = detector_config.get('system_anomaly', {})
+                    
+                    # Для точечных аномалий
+                    for point_anomaly in detector_config.get('points_anomaly', []):
+                        metric_name = point_anomaly['metric']
+                        cursor.execute(
+                            "SELECT id FROM metrics WHERE name = %s",
+                            (metric_name,)
+                        )
+                        result = cursor.fetchone()
+                        if not result:
+                            continue
+                            
+                        metric_id = result[0]
+                        
+                        cursor.execute(
+                            """
+                            INSERT INTO detector_settings (
+                                metric_id, delta_threshold, median_window,
+                                percentile_threshold, group_anomaly_confirmations,
+                                local_anomaly_confirmations, global_anomaly_confirmations
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (metric_id) DO UPDATE
+                            SET delta_threshold = EXCLUDED.delta_threshold,
+                                median_window = EXCLUDED.median_window,
+                                percentile_threshold = EXCLUDED.percentile_threshold,
+                                group_anomaly_confirmations = EXCLUDED.group_anomaly_confirmations,
+                                local_anomaly_confirmations = EXCLUDED.local_anomaly_confirmations,
+                                global_anomaly_confirmations = EXCLUDED.global_anomaly_confirmations
+                            """,
+                            (
+                                metric_id,
+                                str(point_anomaly.get('delta_threshold', 'auto')),
+                                point_anomaly.get('median_window', '30m'),
+                                system_anomaly.get('percentile_threshold', 0.95),
+                                system_anomaly.get('min_confirmations', {}).get('group_anomaly', 20),
+                                system_anomaly.get('min_confirmations', {}).get('local_anomaly', 3),
+                                system_anomaly.get('min_confirmations', {}).get('global_anomaly', 1)
+                            )
+                        )
                 
                 self.db_conn.commit()
                 self.logger.info("Инициализация БД успешно завершена")
@@ -356,20 +488,18 @@ class DatabaseManager:
                 raise ValueError("manual_params must be a dictionary")
             return model_config['manual_params']
         
-        # Возвращаем дефолтные параметры
+        # Возвращаем дефолтные параметры для optuna
         return {
-            'layers': [
-                {'type': 'LSTM', 'units': 64, 'return_sequences': True},
-                {'type': 'LSTM', 'units': 32, 'return_sequences': False},
-                {'type': 'Dense', 'units': 1}
-            ],
-            'learning_rate': 0.001,
-            'batch_size': 32,
-            'dropout': 0.2,
-            'epochs': 50,
-            'loss': 'mean_squared_error',
-            'optimizer': 'adam',
-            'validation_split': 0.2
+            'direction': 'minimize',
+            'metric': 'val_loss',
+            'n_trials': 20,
+            'sampler': 'TPE',
+            'pruner': 'Hyperband',
+            'fixed_parameters': {
+                'loss': 'mean_squared_error',
+                'optimizer': 'adam',
+                'validation_split': 0.2
+            }
         }
 
     def clean_old_data(self) -> None:
@@ -380,7 +510,11 @@ class DatabaseManager:
             with self.db_conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 # 1. Получаем все активные метрики
                 cursor.execute("""
-                    SELECT id, name, query FROM metrics WHERE status = 'active'
+                    SELECT m.id, m.name, ds.delta_threshold, ds.median_window,
+                           ds.percentile_threshold, ds.group_anomaly_confirmations
+                    FROM metrics m
+                    LEFT JOIN detector_settings ds ON m.id = ds.metric_id
+                    WHERE m.status = 'active'
                 """)
                 metrics = cursor.fetchall()
                 
@@ -395,32 +529,20 @@ class DatabaseManager:
                 for metric in metrics:
                     metric_id = metric['id']
                     metric_name = metric['name']
-                    metric_query = metric['query']
-                    
-                    # Ищем конфигурацию для этой метрики
-                    metric_config = None
-                    for cfg in self.config.get('mad-detector', {}).get('points_anomaly', []):
-                        if cfg.get('metric') == metric_name:
-                            metric_config = cfg
-                            break
-                    
-                    if not metric_config:
-                        self.logger.debug(f"Для метрики {metric_name} нет конфигурации, пропускаем")
-                        continue
                     
                     # Определяем период хранения
-                    if metric_config.get('delta_threshold') == 'auto':
+                    if metric['delta_threshold'] == 'auto':
                         # Для auto берем максимальное из median_window и периода для групповой аномалии
-                        median_window = metric_config.get('median_window', '30m')
+                        median_window = metric.get('median_window', '30m')
                         median_seconds = self._parse_duration(median_window)
                         
-                        # Период для групповой аномалии (20 точек * 60 секунд)
-                        group_seconds = self.config['mad-detector']['system_anomaly']['min_confirmations']['group_anomaly'] * 60
+                        # Период для групповой аномалии (confirmations * 60 секунд)
+                        group_seconds = metric.get('group_anomaly_confirmations', 20) * 60
                         
                         retention_seconds = max(median_seconds, group_seconds)
                     else:
                         # Для фиксированного delta_threshold храним только для групповой аномалии
-                        retention_seconds = self.config['mad-detector']['system_anomaly']['min_confirmations']['group_anomaly'] * 60
+                        retention_seconds = metric.get('group_anomaly_confirmations', 20) * 60
                     
                     cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=retention_seconds)
                     
@@ -484,8 +606,6 @@ def main():
     
     # Команда clean
     clean_parser = subparsers.add_parser('clean', help='Очистка старых данных')
-    clean_parser.add_argument('--retention', default='30d',
-                            help='Период хранения данных (например, 30d, 1h)')
     
     args = parser.parse_args()
     
@@ -496,7 +616,7 @@ def main():
         if args.command == 'init':
             manager.init_database()
         elif args.command == 'clean':
-            manager.clean_old_data(args.retention)
+            manager.clean_old_data()
             
     except Exception as e:
         logging.error(f"Ошибка выполнения команды: {str(e)}", exc_info=True)

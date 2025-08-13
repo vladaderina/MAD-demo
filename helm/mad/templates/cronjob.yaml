@@ -1,9 +1,9 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: mad-detector-cleaner
+  name: mad-cleaner
   labels:
-    app: mad-detector
+    app: mad-maintainer
     component: cleaner
 spec:
   schedule: "*/5 * * * *"
@@ -14,17 +14,24 @@ spec:
       template:
         spec:
           containers:
-          - name: cleaner
-            image: "{{ .Values.mad-detector.image.repository }}:{{ .Values.mad-detector.image.tag }}"
-            imagePullPolicy: Always
-            command: ["clean"]
-            envFrom:
-                - secretRef:
-                    name: {{ .Release.Name }}-db-secret
-            env:
-              - name: LOG_PATH
-                value: "{{ .Values.general.log_path }}"
+            - name: cleaner
+              image: "{{ .Values.mad-maintainer.image.repository }}:{{ .Values.mad-maintainer.image.tag }}"
+              imagePullPolicy: Always
+              command: ["clean"]
+              envFrom:
+                  - secretRef:
+                      name: {{ .Release.Name }}-db-secret
+              env:
+                - name: LOG_PATH
+                  value: "{{ .Values.general.log_path }}" 
+              volumeMounts:
+                - mountPath: /app/config
+                  name: config
           restartPolicy: OnFailure
+          volumes:
+            - name: config
+              configMap:
+                name: mad-maintainer-config
 ---
 {{- if .Values.mad-trainer.models }}
 {{- range $model := .Values.mad-trainer.models }}

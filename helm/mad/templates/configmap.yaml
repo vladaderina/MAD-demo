@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mad-trainer-config
+  labels:
+    app: mad-trainer
+data:
+  config.yaml: |
+    mad-trainer:
+{{ toYaml .Values.madComponents.madTrainer | indent 6 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mad-detector-config
+  labels:
+    app: mad-detector
+data:
+  config.yaml: |
+    mad-detector:
+{{ toYaml .Values.madComponents.madDetector | indent 6 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mad-api-config
+  labels:
+    app: mad-api
+data:
+  config.yaml: |
+    mad-api:
+{{ toYaml .Values.madComponents.madApi | indent 6 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mad-scheduler-config
+  labels:
+    app: mad-scheduler
+data:
+  config.yaml: |
+    mad-scheduler:
+{{ toYaml .Values.madComponents.madScheduler | indent 6 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mad-maintainer-config
+  labels:
+    app: mad-maintainer
+data:
+  config.yaml: |
+    # Основные настройки
+    general:
+      # Настройки подключения
+      db_conn_string: {{ .Values.general.db_conn_string | quote }}
+      log_path: {{ .Values.general.log_path | quote }}
+      
+      # Метрики
+      metrics:
+        {{- range .Values.general.metrics }}
+        - {{ merge (dict "interpolation" "linear") . | toYaml | nindent 8 | trim }}
+        {{- end }}
+
+      # Модели
+      models:
+        {{- range .Values.general.models }}
+        - {{ merge (dict 
+            "version_history" 3 
+            "hyperparameter_mode" "optuna"
+            "retrain" (dict "enabled" true)
+          ) . | toYaml | nindent 8 | trim }}
+        {{- end }}
+
+    # Настройки детектора
+    mad-components:
+      mad-detector:
+        {{- $detector := .Values.mad-components.mad-detector }}
+        points_anomaly: {{ $detector.points_anomaly | toYaml | nindent 8 }}
+        system_anomaly:
+          percentile_threshold: {{ $detector.system_anomaly.percentile_threshold }}
+          min_confirmations: {{ $detector.system_anomaly.min_confirmations | toYaml | nindent 10 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mad-notifier-config
+  labels:
+    app: mad-notifier
+data:
+  config.yaml: |
+    mad-notifier:
+{{ toYaml .Values.madComponents.madNotifier | indent 6 }}

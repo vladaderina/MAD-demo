@@ -147,6 +147,7 @@ mad-components:
         validation_split: 0.2
   ###### config trainer
 
+ # config maintainer
   mad-detector:
     image:
       repository: "vladaderina/mad-detector"
@@ -168,7 +169,8 @@ mad-components:
         group_anomaly: 20 # none - params DB
         local_anomaly: 3 # none - params DB
         global_anomaly: 1 # none - params DB
-    
+###### config maintainer
+
   mad-notifier:
     image:
       repository: "vladaderina/mad-notifier"
