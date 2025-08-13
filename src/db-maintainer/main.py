@@ -372,34 +372,91 @@ class DatabaseManager:
             'validation_split': 0.2
         }
 
-    def clean_old_data(self, retention_period: str = "30d") -> None:
-        """Очистка старых данных."""
-        retention_seconds = self._parse_duration(retention_period)
-        cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=retention_seconds)
-        
-        self.logger.info(f"Очистка данных старше {retention_period} (до {cutoff_time})")
+    def clean_old_data(self) -> None:
+        """Очистка старых данных с учетом конфигурации каждой метрики."""
+        self.logger.info("Начало очистки данных с учетом конфигурации метрик")
         
         try:
-            with self.db_conn.cursor() as cursor:
-                # Удаляем старые точки аномалий
-                cursor.execute(
-                    "DELETE FROM anomaly_points WHERE timestamp < %s",
-                    (cutoff_time,)
-                )
-                points_deleted = cursor.rowcount
+            with self.db_conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # 1. Получаем все активные метрики
+                cursor.execute("""
+                    SELECT id, name, query FROM metrics WHERE status = 'active'
+                """)
+                metrics = cursor.fetchall()
                 
-                # Удаляем старые системные аномалии
-                cursor.execute(
-                    "DELETE FROM anomaly_system WHERE end_time IS NOT NULL AND end_time < %s",
-                    (cutoff_time,)
-                )
-                anomalies_deleted = cursor.rowcount
+                if not metrics:
+                    self.logger.warning("Нет активных метрик для очистки")
+                    return
+                
+                total_points_deleted = 0
+                total_anomalies_deleted = 0
+                
+                # 2. Для каждой метрики определяем период хранения
+                for metric in metrics:
+                    metric_id = metric['id']
+                    metric_name = metric['name']
+                    metric_query = metric['query']
+                    
+                    # Ищем конфигурацию для этой метрики
+                    metric_config = None
+                    for cfg in self.config.get('mad-detector', {}).get('points_anomaly', []):
+                        if cfg.get('metric') == metric_name:
+                            metric_config = cfg
+                            break
+                    
+                    if not metric_config:
+                        self.logger.debug(f"Для метрики {metric_name} нет конфигурации, пропускаем")
+                        continue
+                    
+                    # Определяем период хранения
+                    if metric_config.get('delta_threshold') == 'auto':
+                        # Для auto берем максимальное из median_window и периода для групповой аномалии
+                        median_window = metric_config.get('median_window', '30m')
+                        median_seconds = self._parse_duration(median_window)
+                        
+                        # Период для групповой аномалии (20 точек * 60 секунд)
+                        group_seconds = self.config['mad-detector']['system_anomaly']['min_confirmations']['group_anomaly'] * 60
+                        
+                        retention_seconds = max(median_seconds, group_seconds)
+                    else:
+                        # Для фиксированного delta_threshold храним только для групповой аномалии
+                        retention_seconds = self.config['mad-detector']['system_anomaly']['min_confirmations']['group_anomaly'] * 60
+                    
+                    cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=retention_seconds)
+                    
+                    self.logger.info(
+                        f"Очистка данных для метрики {metric_name} (ID: {metric_id}) "
+                        f"старше {retention_seconds//60} минут (до {cutoff_time})"
+                    )
+                    
+                    # Удаляем старые точки аномалий для этой метрики
+                    cursor.execute(
+                        "DELETE FROM anomaly_points WHERE metric_id = %s AND timestamp < %s",
+                        (metric_id, cutoff_time)
+                    )
+                    points_deleted = cursor.rowcount
+                    
+                    # Удаляем старые системные аномалии для этой метрики
+                    cursor.execute(
+                        """DELETE FROM anomaly_system 
+                        WHERE metric_id = %s AND end_time IS NOT NULL AND end_time < %s""",
+                        (metric_id, cutoff_time)
+                    )
+                    anomalies_deleted = cursor.rowcount
+                    
+                    total_points_deleted += points_deleted
+                    total_anomalies_deleted += anomalies_deleted
+                    
+                    self.logger.info(
+                        f"Для метрики {metric_name} удалено: "
+                        f"{points_deleted} точек, {anomalies_deleted} аномалий"
+                    )
                 
                 self.db_conn.commit()
                 self.logger.info(
-                    f"Очистка завершена. Удалено: "
-                    f"{points_deleted} точек аномалий, "
-                    f"{anomalies_deleted} системных аномалий"
+                    f"Очистка завершена. Всего удалено: "
+                    f"{total_points_deleted} точек аномалий, "
+                    f"{total_anomalies_deleted} системных аномалий"
                 )
                 
         except Exception as e:

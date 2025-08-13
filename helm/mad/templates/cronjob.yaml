@@ -1,4 +1,30 @@
-
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: mad-detector-cleaner
+  labels:
+    app: mad-detector
+    component: cleaner
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cleaner
+            image: "{{ .Values.mad-detector.image.repository }}:{{ .Values.mad-detector.image.tag }}"
+            imagePullPolicy: Always
+            command: ["clean"]
+            envFrom:
+                - secretRef:
+                    name: {{ .Release.Name }}-db-secret
+            env:
+              - name: LOG_PATH
+                value: "{{ .Values.general.log_path }}"
+          restartPolicy: OnFailure
 ---
 {{- if .Values.mad-trainer.models }}
 {{- range $model := .Values.mad-trainer.models }}
@@ -22,7 +48,6 @@ spec:
             - name: retrain-scheduler
               image: "{{ .Values.mad-scheduler.repository }}:{{ .Values.mad-scheduler.tag }}"
               imagePullPolicy: {{ .Values.general.pullPolicy }}
-              command: ["python", "-m", "retrain_scheduler"]
               args:
                 - "--model-name={{ $model.name }}"
                 - "--metric-name={{ $model.main_metric }}"

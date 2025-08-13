@@ -12,5 +12,3 @@ COPY . .
 VOLUME /app/config
 
 ENTRYPOINT ["python", "main.py"]
-
-CMD ["init"]

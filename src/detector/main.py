@@ -290,7 +290,40 @@ class AnomalyDetectionService:
 
         except Exception as e:
             logger.error(f"Ошибка обработки модели {model_id}: {str(e)}", exc_info=True)
-    
+
+    def _get_threshold_for_metric(self, model_id: int, metric_query: str) -> float:
+        """Определение порога для метрики с учетом конфига."""
+        # Ищем конфигурацию для этой метрики
+        metric_config = None
+        for metric_cfg in self.config['mad-detector'].get('points_anomaly', []):
+            if metric_cfg.get('metric') == metric_query:
+                metric_config = metric_cfg
+                break
+        
+        if metric_config:
+            delta_threshold = metric_config.get('delta_threshold', 'auto')
+            median_window = metric_config.get('median_window', '3d')
+            
+            if delta_threshold != 'auto':
+                try:
+                    return float(delta_threshold)
+                except (ValueError, TypeError):
+                    logger.warning(f"Некорректное значение delta_threshold для {metric_query}, используем расчетный порог")
+            
+            # Если порог 'auto', передаем median_window в функцию расчета
+            return self._get_anomaly_threshold(model_id, median_window)
+        
+        # Если не нашли конфига для метрики, используем дефолтные значения
+        return self._get_anomaly_threshold(model_id, '3d')
+
+    def _get_metric_query(self, metric_id: int) -> str:
+        """Получение query метрики по ID."""
+        with self._get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT query FROM metrics WHERE id = %s", (metric_id,))
+                result = cursor.fetchone()
+                return result[0] if result else ""
+
     def _process_and_save_results(self, actual: List[float], predicted: np.ndarray,
                                 model_id: int, model_data: Dict) -> None:
         """Обработка и сохранение результатов предсказаний."""
@@ -304,8 +337,10 @@ class AnomalyDetectionService:
             actual_values = actual_values[:min_length]
             errors = np.abs(actual_values - predicted)
             
-            # 2. Получение порога аномалии
-            threshold = self._get_anomaly_threshold(model_id)
+            # 2. Определение порога аномалии
+            metric_query = self._get_metric_query(model_data['metric_id'])
+            threshold = self._get_threshold_for_metric(model_id, metric_query)
+            
             metric_id = model_data['metric_id']
             metric_step = model_data.get('metric_step', DEFAULT_METRIC_STEP)
             
@@ -618,37 +653,61 @@ class AnomalyDetectionService:
             logger.error(f"Ошибка предсказания: {str(e)}")
             return np.zeros((1, 1))
     
-    def _get_anomaly_threshold(self, model_id: int) -> float:
-        """Расчет порога аномалии на основе медианы и MAD."""
+    def _parse_time_window(self, window_str: str) -> timedelta:
+        """Преобразует строку '3d', '24h' и т.д. в timedelta."""
+        if not window_str:
+            return timedelta(days=3)  # Значение по умолчанию
+        
         try:
+            value = int(window_str[:-1])
+            unit = window_str[-1].lower()
+            
+            if unit == 'd':
+                return timedelta(days=value)
+            elif unit == 'h':
+                return timedelta(hours=value)
+            elif unit == 'm':
+                return timedelta(minutes=value)
+            else:
+                raise ValueError(f"Unknown time unit: {unit}")
+        except (ValueError, IndexError):
+            logger.warning(f"Invalid time window format: '{window_str}'. Using default 3d.")
+            return timedelta(days=3)
+
+    def _get_anomaly_threshold(self, model_id: int, window_str: str = '3d') -> float:
+        """Расчет порога аномалии на основе медианы и MAD с параметризованным окном."""
+        try:
+            window_delta = self._parse_time_window(window_str)
+            interval_str = f"INTERVAL '{window_delta.total_seconds()} seconds'"
+            
             with self._get_db_connection() as conn:
                 with conn.cursor() as cursor:
-                    # 1. Получение количества точек за последние 3 дня
-                    cursor.execute("""
+                    # 1. Получение количества точек за указанный период
+                    cursor.execute(f"""
                         SELECT COUNT(*) 
                         FROM prediction_errors 
                         WHERE model_id = %s 
-                        AND timestamp > NOW() - INTERVAL '3 days'
+                        AND timestamp > NOW() - {interval_str}
                     """, (model_id,))
                     recent_points_count = cursor.fetchone()[0]
                     
                     # 2. Расчет медианы ошибок
-                    cursor.execute("""
+                    cursor.execute(f"""
                         SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY error_value) as median
                         FROM prediction_errors
                         WHERE model_id = %s 
-                        AND timestamp > NOW() - INTERVAL '3 days'
+                        AND timestamp > NOW() - {interval_str}
                     """, (model_id,))
                     median = cursor.fetchone()[0] or 0.0
                     
                     # 3. Расчет медианного абсолютного отклонения (MAD)
-                    cursor.execute("""
+                    cursor.execute(f"""
                         SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (
                             ORDER BY ABS(error_value - %s)
                         ) as mad
                         FROM prediction_errors
                         WHERE model_id = %s 
-                        AND timestamp > NOW() - INTERVAL '3 days'
+                        AND timestamp > NOW() - {interval_str}
                     """, (median, model_id))
                     mad = cursor.fetchone()[0] or 0.0
                     
@@ -657,7 +716,8 @@ class AnomalyDetectionService:
                     
                     logger.debug(
                         f"Порог для модели {model_id}: "
-                        f"медиана={median:.4f}, mad={mad:.4f}, порог={threshold:.4f}"
+                        f"медиана={median:.4f}, mad={mad:.4f}, порог={threshold:.4f} "
+                        f"(окно: {window_str})"
                     )
                     return threshold
                     

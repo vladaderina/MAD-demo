@@ -7,7 +7,6 @@ defaults:
       auto_range:
         lookback_period: "30d"
         step: "1m"
-    min_training_period: "5d"
     retrain:
       enabled: false
   

@@ -157,9 +157,10 @@ mad-components:
       targetPort: 30005
       protocol: HTTP
     points_anomaly:
-      - query: requests_total # HELM
+      - metric: requests_total # HELM
         delta_threshold: "auto" # HELM
-      - query: requests_total_2 # HELM
+        median_window: "30m"
+      - metric: requests_total_2 # HELM
         delta_threshold: 65 # HELM
     system_anomaly:
       percentile_threshold: 0.95 # none - params DB
