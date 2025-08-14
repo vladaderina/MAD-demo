@@ -63,8 +63,7 @@ class ModelTrainer:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         
-        # Файловый обработчик с ротацией
-        log_path = self.config['system'].get('log_path', './model_trainer.log')
+        log_path = self.config['general'].get('log_path', './model_trainer.log')
         try:
             file_handler = RotatingFileHandler(
                 log_path,
@@ -76,7 +75,6 @@ class ModelTrainer:
         except IOError as e:
             logger.error(f"Не удалось открыть файл логов {log_path}: {str(e)}")
             
-        # Консольный обработчик
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
@@ -84,11 +82,12 @@ class ModelTrainer:
     def _load_config(self, config_path: Optional[str]) -> Dict:
         """Загрузка конфигурации из файла и переменных окружения."""
         config = {
-            'system': {},
-            'mad-predictor': {'models': []}
+            'general': {},
+            'metrics': [],
+            'models': [],
+            'mad-components': {'mad-trainer': {}}
         }
         
-        # Загрузка из файла конфига, если он указан
         if config_path:
             try:
                 with open(config_path, "r") as f:
@@ -98,40 +97,51 @@ class ModelTrainer:
                 logger.warning(f"Файл конфигурации не найден: {config_path}")
             except yaml.YAMLError as e:
                 logger.error(f"Ошибка парсинга YAML: {str(e)}")
-                raise ConfigError(f"Invalid YAML config: {str(e)}")
+                raise ConfigError(f"Ошибка в конфигурационном файле: {str(e)}")
         
-        # Получение параметров из переменных окружения
-        env_config = {
-            'system': {
-                'log_path': os.getenv('LOG_PATH', './model_trainer.log'),
-                'victoriametrics_url': os.getenv('VICTORIAMETRICS_URL'),
-                'db_conn_string': os.getenv('DB_CONN_STRING'),
-                'workers': int(os.getenv('WORKERS', '3')),
-                'host': os.getenv('HOST', '0.0.0.0'),
-                'port': int(os.getenv('PORT', '8080')),
-                'enable_retrain_checker': os.getenv('ENABLE_RETRAIN_CHECKER', 'true').lower() == 'true',
-                'detector_service_url': os.getenv('DETECTOR_SERVICE_URL')
-            }
+        # Переопределение параметров из переменных окружения
+        env_mapping = {
+            'VICTORIAMETRICS_URL': ('general', 'victoriametrics_url'),
+            'DB_CONN_STRING': ('general', 'db_conn_string'),
+            'LOG_PATH': ('general', 'log_path'),
+            'WORKERS': ('mad-components', 'mad-trainer', 'workers'),
+            'HOST': ('mad-components', 'mad-trainer', 'host'),
+            'PORT': ('mad-components', 'mad-trainer', 'port'),
+            'DETECTOR_SERVICE_URL': ('mad-components', 'mad-trainer', 'detector_service_url')
         }
         
-        # Объединение конфигов
-        for key, value in env_config['system'].items():
+        for env_var, config_path in env_mapping.items():
+            value = os.getenv(env_var)
             if value is not None:
-                config['system'][key] = value
+                current = config
+                for part in config_path[:-1]:
+                    current = current.setdefault(part, {})
+                current[config_path[-1]] = value
         
         # Валидация обязательных параметров
-        required_params = ['victoriametrics_url', 'db_conn_string']
-        missing_params = [p for p in required_params if not config['system'].get(p)]
+        required_params = [
+            ('general', 'victoriametrics_url'),
+            ('general', 'db_conn_string')
+        ]
         
-        if missing_params:
-            raise ConfigError(f"Отсутствуют обязательные параметры: {', '.join(missing_params)}")
+        missing = []
+        for path in required_params:
+            current = config
+            try:
+                for part in path:
+                    current = current[part]
+            except KeyError:
+                missing.append('.'.join(path))
+        
+        if missing:
+            raise ConfigError(f"Отсутствуют обязательные параметры: {', '.join(missing)}")
                 
         return config
     
     async def _create_db_pool(self) -> asyncpg.Pool:
         """Создание пула подключений к PostgreSQL."""
         try:
-            db_config = self._parse_db_conn_string(self.config['system']['db_conn_string'])
+            db_config = self._parse_db_conn_string(self.config['general']['db_conn_string'])
             return await asyncpg.create_pool(**db_config)
         except Exception as e:
             logger.error(f"Ошибка создания пула подключений: {str(e)}")
@@ -154,7 +164,7 @@ class ModelTrainer:
             }
         except (IndexError, ValueError) as e:
             logger.error(f"Неверный формат строки подключения к БД: {conn_string}")
-            raise ConfigError("Invalid database connection string format")
+            raise ConfigError("Неверный формат строки подключения к БД")
     
     async def handle_health_check(self, request: web.Request) -> web.Response:
         """Проверка здоровья сервиса."""

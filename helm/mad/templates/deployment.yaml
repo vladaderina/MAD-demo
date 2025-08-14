@@ -15,20 +15,63 @@ spec:
         component: api
     spec:
       containers:
-      - name: api
-        image: "{{ .Values.mad-components.mad-api.image.repository }}:{{ .Values.mad-components.mad-api.image.tag }}"
+        - name: api
+          image: "{{ .Values.mad-components.mad-api.image.repository }}:{{ .Values.mad-components.mad-api.image.tag }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.mad-components.mad-trainer.service.port }}
+              protocol: {{ .Values.mad-components.mad-trainer.service.protocol }}
+          env:
+            - name: DB_CONN_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: mad-secrets
+                  key: db-conn-string
+            - name: TRAINER_SERVICE_URL
+              value: {{- include "serviceFQDN" (dict "name" "mad-api") | nindent 10 }}
+            - name: LOG_PATH
+              value: {{ .Values.general.log_path }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mad-trainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mad
+      component: trainer
+  template:
+    metadata:
+      labels:
+        app: mad
+        component: trainer
+    spec:
+      containers:
+      - name: trainer
+        image: "{{ .Values.mad-components.mad-trainer.image.repository }}:{{ .Values.mad-components.mad-trainer.image.tag }}"
         ports:
-        - containerPort: 8080
+          - name: http
+            containerPort: {{ .Values.mad-components.mad-trainer.service.port }}
+            protocol: {{ .Values.mad-components.mad-trainer.service.protocol }}
+        envFrom:
+          - secretRef:
+              name: {{ .Release.Name }}-db-secret
         env:
-        - name: DB_CONN_STRING
-          valueFrom:
-            secretKeyRef:
-              name: mad-secrets
-              key: db-conn-string
-        - name: TRAINER_SERVICE_URL
-          value: {{- include "serviceFQDN" (dict "name" "mad-api") | nindent 10 }}
-        - name: LOG_PATH
-          value: {{ .Values.general.log_path }}
+          - name: CONFIG_PATH
+            value: /app/config/config.yaml
+          - name: VICTORIAMETRICS_URL
+            value: {{ .Values.config.general.victoriametrics_url | quote }}
+          - name: DETECTOR_SERVICE_URL
+            value: {{- include "serviceFQDN" (dict "name" "mad-detector") | nindent 10 }}
+        volumeMounts:
+          - mountPath: /app/config
+            name: config
+      volumes:
+        - name: config
+          configMap:
+            name: mad-trainer-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,13 +93,13 @@ spec:
         - name: detector
           image: "{{ .Values.mad-components.mad-detector.image.repository }}:{{ .Values.mad-components.mad-detector.image.tag }}"
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: {{ .Values.mad-components.mad-detector.service.port }}
+              protocol: {{ .Values.mad-components.mad-detector.service.protocol }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-db-secret
           env:
-            - name: DB_CONN_STRING
-              valueFrom:
-                secretKeyRef:
-                  name: mad-secrets
-                  key: db-conn-string
             - name: VICTORIAMETRICS_URL
               value: {{ .Values.general.victoriametrics_url }}
             - name: NOTIFIER_SERVICE_URL
@@ -89,7 +132,7 @@ spec:
         component: notifier
     spec:
       containers:
-        - name: {{ .Chart.Name }}
+        - name: notifier
           image: "{{ .Values.mad-components.mad-notifier.image.repository }}:{{ .Values.mad-components.mad-notifier.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
