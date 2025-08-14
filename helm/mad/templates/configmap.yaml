@@ -12,13 +12,30 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: mad-scheduler-config
+  labels:
+    app: mad-scheduler
+data:
+  config.yaml: |
+    mad-scheduler:
+{{ toYaml .Values.madComponents.madScheduler | indent 6 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: mad-detector-config
   labels:
     app: mad-detector
 data:
   config.yaml: |
-    mad-detector:
-{{ toYaml .Values.madComponents.madDetector | indent 6 }}
+    # Настройки детектора
+    mad-components:
+      mad-detector:
+        {{- $detector := .Values.mad-components.mad-detector }}
+        points_anomaly: {{ $detector.points_anomaly | toYaml | nindent 8 }}
+        system_anomaly:
+          percentile_threshold: {{ $detector.system_anomaly.percentile_threshold }}
+          min_confirmations: {{ $detector.system_anomaly.min_confirmations | toYaml | nindent 10 }}
 ---
 apiVersion: v1
 kind: ConfigMap

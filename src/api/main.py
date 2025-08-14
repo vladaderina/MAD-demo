@@ -37,8 +37,7 @@ class AnomalyAPIService:
     def _validate_environment(self) -> None:
         """Проверка обязательных переменных среды."""
         required_vars = [
-            'DB_CONN_STRING',
-            'VICTORIAMETRICS_URL'
+            'DB_CONN_STRING'
         ]
         
         missing_vars = [var for var in required_vars if var not in os.environ]

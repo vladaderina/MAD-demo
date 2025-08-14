@@ -25,9 +25,50 @@ spec:
             secretKeyRef:
               name: mad-secrets
               key: db-conn-string
-        - name: VICTORIAMETRICS_URL
-          value: {{ .Values.general.victoriametrics_url }}
         - name: TRAINER_SERVICE_URL
-          value: {{- include "serviceFQDN" (dict "name" "mad-trainer") | nindent 10 }}
+          value: {{- include "serviceFQDN" (dict "name" "mad-api") | nindent 10 }}
         - name: LOG_PATH
           value: {{ .Values.general.log_path }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mad-detector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mad
+      component: detector
+  template:
+    metadata:
+      labels:
+        app: mad
+        component: detector
+    spec:
+      containers:
+        - name: detector
+          image: "{{ .Values.mad-components.mad-detector.image.repository }}:{{ .Values.mad-components.mad-detector.image.tag }}"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_CONN_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: mad-secrets
+                  key: db-conn-string
+            - name: VICTORIAMETRICS_URL
+              value: {{ .Values.general.victoriametrics_url }}
+            - name: NOTIFIER_SERVICE_URL
+              value: {{- include "serviceFQDN" (dict "name" "mad-notifier") | nindent 10 }}
+            - name: LOG_PATH
+              value: {{ .Values.general.log_path }}
+          volumeMounts:
+            - mountPath: /app/config
+              name: config
+    restartPolicy: OnFailure
+    volumes:
+      - name: config
+        configMap:
+          name: mad-detector-config
+---
