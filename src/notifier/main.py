@@ -24,22 +24,26 @@ class AnomalyNotifier:
     """Сервис уведомлений об аномалиях с HTTP API."""
     
     def __init__(self):
-        """Инициализация сервиса."""
         self.jinja_env = Environment()
         self.jinja_env.filters['datetimeformat'] = self._format_datetime
         
-        self.config = self._load_config_from_env()
+        # Загрузка конфигурации из env
+        self.port = int(os.getenv('PORT', DEFAULT_PORT))
+        self.debug = os.getenv('DEBUG', 'false').lower() == 'true'
+        self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+        self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
+        
+        self._validate_config()
         self._setup_logging()
         self._init_templates()
         
-        # Инициализация HTTP сервера
         self.app = web.Application()
         self.app.add_routes([
             web.post('/api/v1/anomalies', self.handle_anomaly),
             web.get('/health', self.handle_healthcheck)
         ])
         
-        self.http_session = None  # Для отправки в Telegram
+        self.http_session = None
         self.runner = None
         self.site = None
 
@@ -114,17 +118,16 @@ class AnomalyNotifier:
         self._validate_config(config)
         return config
 
-    def _validate_config(self, config: Dict) -> None:
-        """Валидация обязательных параметров конфигурации."""
-        if not config['mad-notifier'].get('bot_token'):
-            raise ValueError("Необходимо указать TELEGRAM_BOT_TOKEN в переменных окружения")
-        
-        if not config['mad-notifier'].get('chat_id'):
-            raise ValueError("Необходимо указать TELEGRAM_CHAT_ID в переменных окружения")
+    def _validate_config(self):
+        """Проверка обязательных переменных окружения"""
+        if not self.bot_token:
+            raise ValueError("TELEGRAM_BOT_TOKEN must be set")
+        if not self.chat_id:
+            raise ValueError("TELEGRAM_CHAT_ID must be set")
 
-    def _setup_logging(self) -> None:
-        """Настройка системы логирования."""
-        log_level = logging.DEBUG if self.config['system'].get('debug', False) else logging.INFO
+    def _setup_logging(self):
+        """Настройка логирования с учетом DEBUG флага"""
+        log_level = logging.DEBUG if self.debug else logging.INFO
         logger.setLevel(log_level)
         
         formatter = logging.Formatter(
@@ -132,19 +135,21 @@ class AnomalyNotifier:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         
-        log_path = self.config['system'].get('log_path', DEFAULT_LOG_PATH)
-        file_handler = RotatingFileHandler(
-            log_path,
-            maxBytes=MAX_LOG_SIZE,
-            backupCount=LOG_BACKUP_COUNT
-        )
-        file_handler.setFormatter(formatter)
-        
+        # Консольный вывод
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
-        
-        logger.addHandler(file_handler)
         logger.addHandler(console_handler)
+        
+        # Файловый вывод (если указан путь)
+        log_path = os.getenv('LOG_PATH')
+        if log_path:
+            file_handler = RotatingFileHandler(
+                log_path,
+                maxBytes=MAX_LOG_SIZE,
+                backupCount=LOG_BACKUP_COUNT
+            )
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
 
     def _format_datetime(self, value) -> str:
         """Форматирование datetime для шаблонов."""
@@ -254,22 +259,17 @@ class AnomalyNotifier:
         except Exception as e:
             logger.error(f"Ошибка обработки аномалии: {str(e)}")
 
-    async def start_server(self, port: int = None):
-        """Запуск HTTP сервера."""
-        port = port or self.config['system'].get('port', DEFAULT_PORT)
-        
-        # Инициализация клиента для Telegram
-        self.http_session = aiohttp.ClientSession()
-        
-        # Запуск сервера
-        self.runner = web.AppRunner(self.app)
-        await self.runner.setup()
-        
-        self.site = web.TCPSite(self.runner, '0.0.0.0', port)
-        await self.site.start()
-        
-        logger.info(f"Сервис уведомлений запущен на порту {port}")
-
+    async def start_server(self):
+            """Запуск сервера с портом из переменных окружения"""
+            self.http_session = aiohttp.ClientSession()
+            self.runner = web.AppRunner(self.app)
+            await self.runner.setup()
+            
+            self.site = web.TCPSite(self.runner, '0.0.0.0', self.port)
+            await self.site.start()
+            
+            logger.info(f"Сервис запущен на порту {self.port} (DEBUG: {self.debug})")
+            
     async def stop_server(self):
         """Остановка HTTP сервера."""
         if self.http_session:

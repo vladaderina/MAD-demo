@@ -86,14 +86,3 @@ data:
         system_anomaly:
           percentile_threshold: {{ $detector.system_anomaly.percentile_threshold }}
           min_confirmations: {{ $detector.system_anomaly.min_confirmations | toYaml | nindent 10 }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mad-notifier-config
-  labels:
-    app: mad-notifier
-data:
-  config.yaml: |
-    mad-notifier:
-{{ toYaml .Values.madComponents.madNotifier | indent 6 }}

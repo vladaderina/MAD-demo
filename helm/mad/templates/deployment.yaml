@@ -72,3 +72,43 @@ spec:
         configMap:
           name: mad-detector-config
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mad-notifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mad
+      component: notifier
+  template:
+    metadata:
+      labels:
+        app: mad
+        component: notifier
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.mad-components.mad-notifier.image.repository }}:{{ .Values.mad-components.mad-notifier.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.mad-components.mad-notifier.service.port }}
+              protocol: {{ .Values.mad-components.mad-notifier.service.protocol }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-telegram-secrets
+          env:
+            - name: PORT
+              value: {{ .Values.mad-components.mad-notifier.service.port }}
+            - name: DEBUG
+              value: {{ .Values.mad-components.mad-notifier.debug }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
