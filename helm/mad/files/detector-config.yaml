@@ -1,0 +1,14 @@
+# mad-detector-config.yaml
+points_anomaly:
+  - metric: requests_total
+    delta_threshold: "auto"
+    median_window: "30m"
+  - metric: requests_total_2
+    delta_threshold: 65
+
+system_anomaly:
+  percentile_threshold: 0.95
+  min_confirmations:
+    group_anomaly: 20
+    local_anomaly: 3
+    global_anomaly: 1

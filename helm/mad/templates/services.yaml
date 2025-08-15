@@ -1,4 +1,4 @@
-{{- range $name, $config := .Values.mad-components }}
+{{- range $name, $config := .Values.mad_components }}
 {{- if and $config.service (eq $config.service.type "NodePort") }}
 ---
 apiVersion: v1

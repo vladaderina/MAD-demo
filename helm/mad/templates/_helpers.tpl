@@ -26,18 +26,11 @@ Convert retrain interval to cron schedule
 {{- end -}}
 
 {{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "retrain-scheduler.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{/*
 Полное доменное имя сервиса (FQDN) с автоматическим определением порта
 */}}
 {{- define "serviceFQDN" -}}
 {{- $name := required "Service name is required" .name -}}
-{{- $namespace := default .Release.Namespace .namespace -}}
+{{- $namespace := default "default" (coalesce .namespace .Release.Namespace) -}}
 {{- $clusterDomain := default "cluster.local" .clusterDomain -}}
 
 {{- /* Базовый FQDN */}}
@@ -45,9 +38,11 @@ Create chart name and version as used by the chart label.
 
 {{- /* Автоматически определяем порт из новой структуры */}}
 {{- $port := "" -}}
-{{- $serviceValues := index .Values (printf "%s" $name) -}}
-{{- if $serviceValues -}}
-  {{- $port = $serviceValues.port -}}
+{{- if hasKey . "Values" -}}
+  {{- $serviceValues := index .Values (printf "%s" $name) -}}
+  {{- if $serviceValues -}}
+    {{- $port = $serviceValues.port -}}
+  {{- end -}}
 {{- end -}}
 
 {{- /* Добавляем порт если найден */}}

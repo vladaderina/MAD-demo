@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: mad-initializer
   labels:
-    app: mad-maintainer
+    app: mad_maintainer
     component: initializer
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: initializer
-          image: "{{ .Values.mad-components.mad-maintainer.image.repository }}:{{ .Values.mad-components.mad-maintainer.image.tag }}"
+          image: "{{ .Values.mad_components.mad_maintainer.image.repository }}:{{ .Values.mad_components.mad_maintainer.image.tag }}"
           imagePullPolicy: {{ .Values.general.pullPolicy | default "IfNotPresent" }}
           command: ["init"]
           envFrom:
@@ -29,4 +29,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: mad-maintainer-config
+            name: maintainer-config

@@ -1,0 +1,34 @@
+# mad-trainer-config.yaml
+optuna_tuning:
+  direction: "minimize"
+  metric: "val_loss"
+  n_trials: 20
+  sampler: "TPE"
+  pruner: "Hyperband"
+  hyperparameter_ranges:
+    layers:
+      - type: "LSTM"
+        units:
+          min: 32
+          max: 256
+          step: 32
+        return_sequences: [True, False]
+      - type: "Dense"
+        units:
+          min: 1
+          max: 64
+    learning_rate:
+      min: 0.0001
+      max: 0.01
+      log: true
+    batch_size: [16, 32, 64, 128]
+    dropout:
+      min: 0.1
+      max: 0.5
+    epochs:
+      min: 10
+      max: 100
+  fixed_parameters:
+    loss: "mean_squared_error"
+    optimizer: "adam"
+    validation_split: 0.2

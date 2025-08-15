@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: mad-cleaner
   labels:
-    app: mad-maintainer
+    app: mad_maintainer
     component: cleaner
 spec:
   schedule: "*/5 * * * *"
@@ -15,7 +15,7 @@ spec:
         spec:
           containers:
             - name: cleaner
-              image: "{{ .Values.mad-components.mad-components.mad-maintainer.image.repository }}:{{ .Values.mad-components.mad-maintainer.image.tag }}"
+              image: "{{ .Values.mad_components.mad_maintainer.image.repository }}:{{ .Values.mad_components.mad_maintainer.image.tag }}"
               imagePullPolicy: Always
               command: ["clean"]
               envFrom:
@@ -31,10 +31,10 @@ spec:
           volumes:
             - name: config
               configMap:
-                name: mad-maintainer-config
+                name: maintainer-config
 ---
-{{- if .Values.mad-components.mad-trainer.models }}
-{{- range $model := .Values.mad-components.mad-trainer.models }}
+{{- if .Values.mad_components.mad_trainer.models }}
+{{- range $model := .Values.mad_components.mad_trainer.models }}
 {{- if $model.retrain.enabled }}
 apiVersion: batch/v1
 kind: CronJob
@@ -53,7 +53,7 @@ spec:
         spec:
           containers:
             - name: retrain-scheduler
-              image: "{{ .Values.mad-components.mad-scheduler.repository }}:{{ .Values.mad-components.mad-scheduler.tag }}"
+              image: "{{ .Values.mad_components.mad_scheduler.repository }}:{{ .Values.mad_components.mad_scheduler.tag }}"
               imagePullPolicy: {{ .Values.general.pullPolicy }}
               args:
                 - "--model-name={{ $model.name }}"
@@ -65,7 +65,7 @@ spec:
                     name: {{ .Release.Name }}-db-secret
               env:
                 - name: TRAINER_API_URL
-                  value: {{- include "serviceFQDN" (dict "name" "mad-trainer") | nindent 10 }}
+                  value: {{- include "serviceFQDN" (dict "name" "mad_trainer") | nindent 10 }}
           restartPolicy: OnFailure
 {{- end }}
 {{- end }}

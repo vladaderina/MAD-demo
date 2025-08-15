@@ -3,77 +3,11 @@ general:
   db_conn_string: "postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models" # DB_CONN_STRING api/maintainer/detector/trainer
   log_path: "./anomaly_detection.log" # LOG_PATH всем
   pullPolicy: "Always"
-  # config maintainer
-  metrics:
-    - name: "requests_total"
-      query: 'vm_http_requests_total{path="/api/v1/query_range"}'
-      interpolation: "linear"
-      exclude_periods:
-        - start: "2023-05-10T12:00:00Z"
-          end: "2023-05-10T14:30:00Z"
-          reason: "Технические работы"
-          anomaly_type: "global"
-        - start: "2023-05-15T09:00:00Z"
-          end: "2023-05-15T11:45:00Z"
-          reason: "Сбой в системе"
-          anomaly_type: "local"
-    - name: "cpu_utilization"
-      query: 'vm_http_requests_total{path="/api/v1"}'
 
-  # config trainer
-  models:
-    - name: "requests_total_hard"
-      main_metric: "requests_total"
-      additional_metrics:
-        - "cpu_utilization"
-      version_history: 5
-      hyperparameter_mode: "optuna"
-      retrain:
-        enabled: true
-        strategy: "sliding_window"
-        interval: "7d"
-      training_period:
-        fixed_range:
-          start: "2025-07-18T07:28:03Z"
-          end: "2025-07-29T08:00:30Z"
-          step: "1m"
-    - name: "requests_total_easy"
-      main_metric: "requests_total"
-      version_history: 1
-      hyperparameter_mode: "manual"
-      manual_params:
-        layers:
-          - type: "LSTM"
-            units: 64
-            return_sequences: True
-          - type: "LSTM"
-            units: 32
-            return_sequences: False
-          - type: "Dense"
-            units: 1
-        learning_rate: 0.001
-        batch_size: 32
-        dropout: 0.2
-        epochs: 50
-        loss: "mean_squared_error"
-        optimizer: "adam"
-        validation_split: 0.2
-        window_size: 24
-      retrain:
-        enabled: true
-        strategy: "expanding_window"
-        interval: "12h"
-      training_period:
-        auto_range:
-          lookback_period: "8d"
-          step: "1m"
-###### config maintainer
-###### config trainer
-
-mad-components:
-  mad-api:
+mad_components:
+  mad_api:
     image:
-      repository: "vladaderina/mad-trainer"
+      repository: "vladaderina/mad-api"
       tag: "latest"
     service:
       type: NodePort
@@ -82,7 +16,7 @@ mad-components:
       targetPort: 30001
       protocol: HTTP
 
-  mad-scheduler:
+  mad_scheduler:
     image:
       repository: "vladaderina/mad-scheduler"
       tag: "latest"
@@ -92,7 +26,7 @@ mad-components:
       targetPort: 30002
       protocol: HTTP
 
-  mad-maintainer:
+  mad_maintainer:
     image:
       repository: "vladaderina/mad-maintainer"
       tag: "latest"
@@ -102,8 +36,7 @@ mad-components:
       targetPort: 30003
       protocol: HTTP
 
-  # config trainer
-  mad-trainer:
+  mad_trainer:
     image:
       repository: "vladaderina/mad-trainer"
       tag: "latest"
@@ -112,43 +45,8 @@ mad-components:
       port: 30004
       targetPort: 30004
       protocol: HTTP
-    optuna_tuning:
-      direction: "minimize"
-      metric: "val_loss"
-      n_trials: 20
-      sampler: "TPE"
-      pruner: "Hyperband"
-      hyperparameter_ranges:
-        layers:
-          - type: "LSTM"
-            units:
-              min: 32
-              max: 256
-              step: 32
-            return_sequences: [True, False]
-          - type: "Dense"
-            units:
-              min: 1
-              max: 64
-        learning_rate:
-          min: 0.0001
-          max: 0.01
-          log: true
-        batch_size: [16, 32, 64, 128]
-        dropout:
-          min: 0.1
-          max: 0.5
-        epochs:
-          min: 10
-          max: 100
-      fixed_parameters:
-        loss: "mean_squared_error"
-        optimizer: "adam"
-        validation_split: 0.2
-  ###### config trainer
 
- # config maintainer
-  mad-detector:
+  mad_detector:
     image:
       repository: "vladaderina/mad-detector"
       tag: "latest"
@@ -157,21 +55,8 @@ mad-components:
       port: 30005
       targetPort: 30005
       protocol: HTTP
-    points_anomaly:
-      - metric: requests_total # HELM
-        delta_threshold: "auto" # HELM
-        median_window: "30m"
-      - metric: requests_total_2 # HELM
-        delta_threshold: 65 # HELM
-    system_anomaly:
-      percentile_threshold: 0.95 # none - params DB
-      min_confirmations:
-        group_anomaly: 20 # none - params DB
-        local_anomaly: 3 # none - params DB
-        global_anomaly: 1 # none - params DB
-###### config maintainer
 
-  mad-notifier:
+  mad_notifier:
     image:
       repository: "vladaderina/mad-notifier"
       tag: "latest"
@@ -180,6 +65,6 @@ mad-components:
       port: 30006
       targetPort: 30006
       protocol: HTTP
-    debug: true # DEBUG notify
-    bot_token: "" # TELEGRAM_BOT_TOKEN notify
-    chat_id: "" # TELEGRAM_CHAT_ID notify
+    debug: true
+    bot_token: ""
+    chat_id: ""
