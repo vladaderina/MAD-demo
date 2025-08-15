@@ -10,16 +10,21 @@ import psycopg2
 from psycopg2.extras import Json, RealDictCursor
 
 # Константы
-DEFAULT_LOG_PATH = '/var/log/db_manager.log'
+DEFAULT_LOG_PATH = '/var/log/mad_trainer.log'
 MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
 LOG_BACKUP_COUNT = 3
 DEFAULT_CONFIG_DIR = '/app/config'
-DEFAULT_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/default_config.yaml'
-USER_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/config.yaml'
+DEFAULT_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/default_mad_trainer_config.yaml'
+USER_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/mad-trainer-config.yaml'
 DEFAULT_DB_PORT = '5432'
 
-class DatabaseManager:
-    """Сервис управления базой данных для системы обнаружения аномалий."""
+# Имена переменных среды
+ENV_VICTORIAMETRICS_URL = 'VICTORIAMETRICS_URL'
+ENV_DB_CONN_STRING = 'DB_CONN_STRING'
+ENV_LOG_PATH = 'LOG_PATH'
+
+class MadTrainerDatabaseManager:
+    """Сервис управления базой данных для системы обучения моделей обнаружения аномалий."""
 
     def __init__(self, config_path: Optional[str] = None):
         """Инициализация сервиса."""
@@ -27,14 +32,14 @@ class DatabaseManager:
         self.config = self._load_config(config_path)
         self._validate_config()
         self.db_conn = self._init_db_connection()
-        self.logger.info("Сервис управления БД инициализирован")
+        self.logger.info("Сервис управления БД MAD Trainer инициализирован")
 
     def _setup_logging(self) -> None:
         """Настройка системы логирования."""
-        log_path = self.config.get('general', {}).get('log_path', DEFAULT_LOG_PATH)
+        log_path = os.getenv(ENV_LOG_PATH, DEFAULT_LOG_PATH)
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         
-        self.logger = logging.getLogger('DBManager')
+        self.logger = logging.getLogger('MadTrainerDB')
         self.logger.setLevel(logging.INFO)
         
         formatter = logging.Formatter(
@@ -63,70 +68,55 @@ class DatabaseManager:
             # Создаем директорию для конфигов если нужно
             os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
             
-            # Загружаем дефолтный конфиг
-            default_config = {}
-            if Path(DEFAULT_CONFIG_PATH).exists():
-                with open(DEFAULT_CONFIG_PATH) as f:
-                    default_config = yaml.safe_load(f) or {}
-            
             # Определяем путь к пользовательскому конфигу
             user_config_path = config_path if config_path else USER_CONFIG_PATH
-            user_config = {}
             
-            if Path(user_config_path).exists():
-                with open(user_config_path) as f:
-                    user_config = yaml.safe_load(f) or {}
+            if not Path(user_config_path).exists():
+                raise FileNotFoundError(f"Конфигурационный файл не найден: {user_config_path}")
             
-            # Глубокое слияние конфигов
-            config = self._deep_merge(default_config, user_config)
+            with open(user_config_path) as f:
+                config = yaml.safe_load(f) or {}
             
-            # Применяем дефолты для моделей
-            if 'models' in config.get('general', {}):
-                for model in config['general']['models']:
-                    self._apply_model_defaults(model)
-            
+            # Проверяем наличие обязательных секций
+            if 'general' not in config:
+                config['general'] = {}
+                
+            # Добавляем параметры из переменных среды
+            if ENV_VICTORIAMETRICS_URL in os.environ:
+                config['general']['victoriametrics_url'] = os.environ[ENV_VICTORIAMETRICS_URL]
+                
+            if ENV_DB_CONN_STRING in os.environ:
+                config['general']['db_conn_string'] = os.environ[ENV_DB_CONN_STRING]
+                
+            if ENV_LOG_PATH in os.environ:
+                config['general']['log_path'] = os.environ[ENV_LOG_PATH]
+                
             return config
         except Exception as e:
             self.logger.error(f"Ошибка загрузки конфигурации: {str(e)}")
             raise
 
-    def _deep_merge(self, base: Dict, update: Dict) -> Dict:
-        """Рекурсивное слияние словарей."""
-        for key, value in update.items():
-            if key in base and isinstance(value, dict) and isinstance(base[key], dict):
-                base[key] = self._deep_merge(base[key], value)
-            else:
-                base[key] = value
-        return base
-
-    def _apply_model_defaults(self, model: Dict) -> None:
-        """Применение дефолтных параметров к модели."""
-        # Дефолтные параметры для retrain
-        if 'retrain' not in model:
-            model['retrain'] = {}
-        model['retrain'].setdefault('enabled', True)
-        
-        # Дефолтные параметры для training_period
-        if 'training_period' not in model:
-            model['training_period'] = {'auto_range': {'lookback_period': '7d'}}
-        
-        # Дефолтные параметры для hyperparameter_mode
-        model.setdefault('hyperparameter_mode', 'optuna')
-        model.setdefault('version_history', 3)
-
     def _validate_config(self) -> None:
         """Проверка конфигурации."""
-        if not self.config.get('general', {}).get('metrics'):
-            self.logger.warning("Конфигурация не содержит метрик")
+        general = self.config.get('general', {})
         
-        if not self.config.get('general', {}).get('models'):
+        if not general.get('victoriametrics_url'):
+            raise ValueError(f"Необходимо указать victoriametrics_url в конфигурации или переменной среды {ENV_VICTORIAMETRICS_URL}")
+            
+        if not general.get('db_conn_string'):
+            raise ValueError(f"Необходимо указать db_conn_string в конфигурации или переменной среды {ENV_DB_CONN_STRING}")
+            
+        if not general.get('metrics'):
+            self.logger.warning("Конфигурация не содержит метрик")
+            
+        if not general.get('models'):
             self.logger.warning("Конфигурация не содержит моделей")
 
     def _init_db_connection(self) -> 'psycopg2.connection':
         """Установка соединения с PostgreSQL."""
         conn_string = self.config['general'].get('db_conn_string')
         if not conn_string:
-            raise ValueError("Необходимо указать db_conn_string в конфигурации")
+            raise ValueError(f"Необходимо указать db_conn_string в конфигурации или переменной среды {ENV_DB_CONN_STRING}")
         
         try:
             conn = psycopg2.connect(**self._parse_db_conn_string(conn_string))
@@ -187,20 +177,16 @@ class DatabaseManager:
             raise ValueError(f"Неверный формат длительности: {duration_str}")
 
     def _insert_exclude_periods(self, cursor: 'psycopg2.cursor', metric_id: int, metric_config: Dict) -> None:
-        """Добавление периодов исключения для метрик с проверкой ошибок."""
+        """Добавление периодов исключения для метрик."""
         if 'exclude_periods' not in metric_config:
             self.logger.debug(f"Для метрики ID {metric_id} нет периодов исключения")
-            return
-            
-        if not isinstance(metric_config['exclude_periods'], list):
-            self.logger.error(f"Некорректный формат exclude_periods для метрики ID {metric_id}")
             return
             
         for period in metric_config['exclude_periods']:
             try:
                 # Валидация обязательных полей
-                if not all(key in period for key in ['start', 'end']):
-                    self.logger.error(f"Пропущен обязательный параметр start/end в периоде для метрики ID {metric_id}")
+                if not all(key in period for key in ['start', 'end', 'reason', 'anomaly_type']):
+                    self.logger.error(f"Не все обязательные параметры указаны в периоде для метрики ID {metric_id}")
                     continue
                     
                 # Преобразование времени
@@ -209,7 +195,7 @@ class DatabaseManager:
                 
                 # Проверка на существование периода
                 cursor.execute(
-                    """SELECT id FROM anomaly_system 
+                    """SELECT id FROM training_exclude_periods 
                     WHERE metric_id = %s AND start_time = %s AND end_time = %s""",
                     (metric_id, start_time, end_time)
                 )
@@ -217,23 +203,22 @@ class DatabaseManager:
                 if cursor.fetchone() is None:
                     cursor.execute(
                         """
-                        INSERT INTO anomaly_system (
+                        INSERT INTO training_exclude_periods (
                             start_time, end_time, anomaly_type, 
-                            average_anom_score, metric_id, description
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
+                            metric_id, reason
+                        ) VALUES (%s, %s, %s, %s, %s)
                         """,
                         (
                             start_time, 
                             end_time,
-                            period.get('anomaly_type', 'global'),
-                            100,  # Максимальный уровень аномальности
+                            period['anomaly_type'],
                             metric_id,
-                            period.get('reason', 'Предопределенный исключаемый период')
+                            period['reason']
                         )
                     )
                     self.logger.info(
                         f"Добавлен период исключения для метрики {metric_id}: "
-                        f"{start_time} - {end_time}"
+                        f"{start_time} - {end_time} ({period['reason']})"
                     )
                     
             except ValueError as e:
@@ -243,10 +228,10 @@ class DatabaseManager:
 
     def init_database(self) -> None:
         """Инициализация структуры базы данных."""
-        if not self.config.get('general', {}).get('metrics') or not self.config.get('general', {}).get('models'):
+        if not self.config['general'].get('metrics') or not self.config['general'].get('models'):
             raise ValueError("Конфигурация должна содержать метрики и модели")
         
-        self.logger.info("Начало инициализации БД")
+        self.logger.info("Начало инициализации БД MAD Trainer")
         
         try:
             with self.db_conn.cursor() as cursor:
@@ -255,7 +240,6 @@ class DatabaseManager:
                     CREATE TABLE IF NOT EXISTS metrics (
                         id SERIAL PRIMARY KEY,
                         name VARCHAR(255) NOT NULL UNIQUE,
-                        status VARCHAR(50) DEFAULT 'active',
                         query TEXT NOT NULL,
                         interpolation VARCHAR(50),
                         created_at TIMESTAMP DEFAULT NOW()
@@ -266,17 +250,15 @@ class DatabaseManager:
                 for metric in self.config['general']['metrics']:
                     cursor.execute(
                         """
-                        INSERT INTO metrics (name, status, query, interpolation)
-                        VALUES (%s, %s, %s, %s)
+                        INSERT INTO metrics (name, query, interpolation)
+                        VALUES (%s, %s, %s)
                         ON CONFLICT (name) DO UPDATE 
-                        SET status = EXCLUDED.status, 
-                            query = EXCLUDED.query,
+                        SET query = EXCLUDED.query,
                             interpolation = EXCLUDED.interpolation
                         RETURNING id
                         """,
                         (
                             metric['name'], 
-                            metric.get('status', 'active'), 
                             metric['query'],
                             metric.get('interpolation', 'linear')
                         )
@@ -285,22 +267,14 @@ class DatabaseManager:
                     self._insert_exclude_periods(cursor, metric_id, metric)
                     self.logger.info(f"Добавлена метрика {metric['name']} (ID: {metric_id})")
                 
-                # Создание таблицы информации о моделях
+                # Создание таблицы моделей
                 cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS models_info (
+                    CREATE TABLE IF NOT EXISTS models (
                         id SERIAL PRIMARY KEY,
                         name VARCHAR(255) NOT NULL UNIQUE,
                         main_metric_id INTEGER REFERENCES metrics(id),
-                        version_history INTEGER DEFAULT 3,
-                        hyperparameter_mode VARCHAR(50) DEFAULT 'auto',
-                        retrain_enabled BOOLEAN DEFAULT TRUE,
-                        retrain_strategy VARCHAR(50),
-                        retrain_interval VARCHAR(50),
-                        training_period_type VARCHAR(50),
-                        training_period_start TIMESTAMP,
-                        training_period_end TIMESTAMP,
-                        training_period_step VARCHAR(50),
-                        training_period_lookback VARCHAR(50),
+                        version_history INTEGER NOT NULL,
+                        hyperparameter_mode VARCHAR(50) NOT NULL,
                         created_at TIMESTAMP DEFAULT NOW()
                     )
                 """)
@@ -308,21 +282,69 @@ class DatabaseManager:
                 # Создание таблицы дополнительных метрик для моделей
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS model_additional_metrics (
-                        model_id INTEGER REFERENCES models_info(id),
+                        model_id INTEGER REFERENCES models(id),
                         metric_id INTEGER REFERENCES metrics(id),
                         PRIMARY KEY (model_id, metric_id)
                     )
                 """)
                 
+                # Создание таблицы параметров обучения
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS training_params (
+                        model_id INTEGER REFERENCES models(id) PRIMARY KEY,
+                        retrain_enabled BOOLEAN NOT NULL,
+                        retrain_strategy VARCHAR(50) NOT NULL,
+                        retrain_interval VARCHAR(50) NOT NULL,
+                        training_period_type VARCHAR(50) NOT NULL,
+                        training_start TIMESTAMP,
+                        training_end TIMESTAMP,
+                        training_step VARCHAR(50),
+                        training_lookback VARCHAR(50),
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                """)
+                
+                # Создание таблицы ручных параметров моделей
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS model_manual_params (
+                        model_id INTEGER REFERENCES models(id) PRIMARY KEY,
+                        layers JSONB NOT NULL,
+                        learning_rate FLOAT NOT NULL,
+                        batch_size INTEGER NOT NULL,
+                        dropout FLOAT NOT NULL,
+                        epochs INTEGER NOT NULL,
+                        loss VARCHAR(50) NOT NULL,
+                        optimizer VARCHAR(50) NOT NULL,
+                        validation_split FLOAT NOT NULL,
+                        window_size INTEGER NOT NULL,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                """)
+                
+                # Создание таблицы периодов исключения для обучения
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS training_exclude_periods (
+                        id SERIAL PRIMARY KEY,
+                        metric_id INTEGER REFERENCES metrics(id),
+                        start_time TIMESTAMP NOT NULL,
+                        end_time TIMESTAMP NOT NULL,
+                        anomaly_type VARCHAR(50) NOT NULL,
+                        reason TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                """)
+                
                 # Создание таблицы версий моделей
                 cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS models (
+                    CREATE TABLE IF NOT EXISTS model_versions (
                         id SERIAL PRIMARY KEY,
-                        model_id INTEGER REFERENCES models_info(id),
-                        status VARCHAR(50) DEFAULT 'waiting',
+                        model_id INTEGER REFERENCES models(id),
                         version VARCHAR(50) NOT NULL,
+                        status VARCHAR(50) DEFAULT 'pending',
                         hyperparams JSONB,
-                        created_at TIMESTAMP DEFAULT NOW()
+                        metrics JSONB,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        UNIQUE(model_id, version)
                     )
                 """)
                 
@@ -335,48 +357,23 @@ class DatabaseManager:
                     )
                     metric_id = cursor.fetchone()[0]
                     
-                    # Определяем параметры обучения
-                    training_period = model.get('training_period', {})
-                    training_period_type = 'fixed_range' if 'fixed_range' in training_period else 'auto_range'
-                    
-                    # Добавляем информацию о модели
+                    # Добавляем модель
                     cursor.execute(
                         """
-                        INSERT INTO models_info (
-                            name, main_metric_id, version_history,
-                            hyperparameter_mode, retrain_enabled,
-                            retrain_strategy, retrain_interval,
-                            training_period_type, training_period_start,
-                            training_period_end, training_period_step,
-                            training_period_lookback
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        INSERT INTO models (
+                            name, main_metric_id, version_history, hyperparameter_mode
+                        ) VALUES (%s, %s, %s, %s)
                         ON CONFLICT (name) DO UPDATE
                         SET main_metric_id = EXCLUDED.main_metric_id,
                             version_history = EXCLUDED.version_history,
-                            hyperparameter_mode = EXCLUDED.hyperparameter_mode,
-                            retrain_enabled = EXCLUDED.retrain_enabled,
-                            retrain_strategy = EXCLUDED.retrain_strategy,
-                            retrain_interval = EXCLUDED.retrain_interval,
-                            training_period_type = EXCLUDED.training_period_type,
-                            training_period_start = EXCLUDED.training_period_start,
-                            training_period_end = EXCLUDED.training_period_end,
-                            training_period_step = EXCLUDED.training_period_step,
-                            training_period_lookback = EXCLUDED.training_period_lookback
+                            hyperparameter_mode = EXCLUDED.hyperparameter_mode
                         RETURNING id
                         """,
                         (
                             model['name'],
                             metric_id,
-                            model.get('version_history', 3),
-                            model.get('hyperparameter_mode', 'optuna'),
-                            model.get('retrain', {}).get('enabled', True),
-                            model.get('retrain', {}).get('strategy'),
-                            model.get('retrain', {}).get('interval'),
-                            training_period_type,
-                            training_period.get('fixed_range', {}).get('start'),
-                            training_period.get('fixed_range', {}).get('end'),
-                            training_period.get('fixed_range', {}).get('step'),
-                            training_period.get('auto_range', {}).get('lookback_period')
+                            model['version_history'],
+                            model['hyperparameter_mode']
                         )
                     )
                     model_id = cursor.fetchone()[0]
@@ -398,81 +395,104 @@ class DatabaseManager:
                             (model_id, additional_metric_id)
                         )
                     
+                    # Добавляем параметры обучения
+                    retrain = model.get('retrain', {})
+                    training_period = model.get('training_period', {})
+                    
+                    if 'fixed_range' in training_period:
+                        period_type = 'fixed'
+                        start_time = training_period['fixed_range']['start']
+                        end_time = training_period['fixed_range']['end']
+                        step = training_period['fixed_range']['step']
+                        lookback = None
+                    else:
+                        period_type = 'auto'
+                        start_time = None
+                        end_time = None
+                        step = training_period['auto_range']['step']
+                        lookback = training_period['auto_range']['lookback_period']
+                    
+                    cursor.execute(
+                        """
+                        INSERT INTO training_params (
+                            model_id, retrain_enabled, retrain_strategy,
+                            retrain_interval, training_period_type,
+                            training_start, training_end, training_step,
+                            training_lookback
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (model_id) DO UPDATE
+                        SET retrain_enabled = EXCLUDED.retrain_enabled,
+                            retrain_strategy = EXCLUDED.retrain_strategy,
+                            retrain_interval = EXCLUDED.retrain_interval,
+                            training_period_type = EXCLUDED.training_period_type,
+                            training_start = EXCLUDED.training_start,
+                            training_end = EXCLUDED.training_end,
+                            training_step = EXCLUDED.training_step,
+                            training_lookback = EXCLUDED.training_lookback
+                        """,
+                        (
+                            model_id,
+                            retrain['enabled'],
+                            retrain['strategy'],
+                            retrain['interval'],
+                            period_type,
+                            start_time,
+                            end_time,
+                            step,
+                            lookback
+                        )
+                    )
+                    
+                    # Добавляем ручные параметры если нужно
+                    if model['hyperparameter_mode'] == 'manual':
+                        manual_params = model['manual_params']
+                        cursor.execute(
+                            """
+                            INSERT INTO model_manual_params (
+                                model_id, layers, learning_rate, batch_size,
+                                dropout, epochs, loss, optimizer,
+                                validation_split, window_size
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (model_id) DO UPDATE
+                            SET layers = EXCLUDED.layers,
+                                learning_rate = EXCLUDED.learning_rate,
+                                batch_size = EXCLUDED.batch_size,
+                                dropout = EXCLUDED.dropout,
+                                epochs = EXCLUDED.epochs,
+                                loss = EXCLUDED.loss,
+                                optimizer = EXCLUDED.optimizer,
+                                validation_split = EXCLUDED.validation_split,
+                                window_size = EXCLUDED.window_size
+                            """,
+                            (
+                                model_id,
+                                Json(manual_params['layers']),
+                                manual_params['learning_rate'],
+                                manual_params['batch_size'],
+                                manual_params['dropout'],
+                                manual_params['epochs'],
+                                manual_params['loss'],
+                                manual_params['optimizer'],
+                                manual_params['validation_split'],
+                                manual_params['window_size']
+                            )
+                        )
+                    
                     # Добавляем начальную версию модели
                     hyperparams = self._get_hyperparams(model)
                     cursor.execute(
                         """
-                        INSERT INTO models (
-                            model_id, status, version, hyperparams
+                        INSERT INTO model_versions (
+                            model_id, version, status, hyperparams
                         ) VALUES (%s, %s, %s, %s)
                         """,
-                        (model_id, 'waiting', '1.0', Json(hyperparams))
+                        (model_id, '1.0', 'pending', Json(hyperparams))
                     )
                     
                     self.logger.info(f"Добавлена модель {model['name']} (ID: {model_id})")
                 
-                # Создаем таблицу для настроек детектора
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS detector_settings (
-                        id SERIAL PRIMARY KEY,
-                        metric_id INTEGER REFERENCES metrics(id),
-                        delta_threshold VARCHAR(50),
-                        median_window VARCHAR(50),
-                        percentile_threshold FLOAT,
-                        group_anomaly_confirmations INTEGER,
-                        local_anomaly_confirmations INTEGER,
-                        global_anomaly_confirmations INTEGER,
-                        created_at TIMESTAMP DEFAULT NOW(),
-                        UNIQUE(metric_id)
-                    )
-                """)
-                
-                # Добавляем настройки детектора
-                if 'mad-detector' in self.config.get('mad-components', {}):
-                    detector_config = self.config['mad-components']['mad-detector']
-                    system_anomaly = detector_config.get('system_anomaly', {})
-                    
-                    # Для точечных аномалий
-                    for point_anomaly in detector_config.get('points_anomaly', []):
-                        metric_name = point_anomaly['metric']
-                        cursor.execute(
-                            "SELECT id FROM metrics WHERE name = %s",
-                            (metric_name,)
-                        )
-                        result = cursor.fetchone()
-                        if not result:
-                            continue
-                            
-                        metric_id = result[0]
-                        
-                        cursor.execute(
-                            """
-                            INSERT INTO detector_settings (
-                                metric_id, delta_threshold, median_window,
-                                percentile_threshold, group_anomaly_confirmations,
-                                local_anomaly_confirmations, global_anomaly_confirmations
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            ON CONFLICT (metric_id) DO UPDATE
-                            SET delta_threshold = EXCLUDED.delta_threshold,
-                                median_window = EXCLUDED.median_window,
-                                percentile_threshold = EXCLUDED.percentile_threshold,
-                                group_anomaly_confirmations = EXCLUDED.group_anomaly_confirmations,
-                                local_anomaly_confirmations = EXCLUDED.local_anomaly_confirmations,
-                                global_anomaly_confirmations = EXCLUDED.global_anomaly_confirmations
-                            """,
-                            (
-                                metric_id,
-                                str(point_anomaly.get('delta_threshold', 'auto')),
-                                point_anomaly.get('median_window', '30m'),
-                                system_anomaly.get('percentile_threshold', 0.95),
-                                system_anomaly.get('min_confirmations', {}).get('group_anomaly', 20),
-                                system_anomaly.get('min_confirmations', {}).get('local_anomaly', 3),
-                                system_anomaly.get('min_confirmations', {}).get('global_anomaly', 1)
-                            )
-                        )
-                
                 self.db_conn.commit()
-                self.logger.info("Инициализация БД успешно завершена")
+                self.logger.info("Инициализация БД MAD Trainer успешно завершена")
                 
         except Exception as e:
             self.db_conn.rollback()
@@ -480,15 +500,11 @@ class DatabaseManager:
             raise
 
     def _get_hyperparams(self, model_config: Dict) -> Dict:
-        """Получение гиперпараметров модели с проверкой"""
-        if model_config.get('hyperparameter_mode') == 'manual':
-            if 'manual_params' not in model_config:
-                raise ValueError("manual_params must be specified when hyperparameter_mode=manual")
-            if not isinstance(model_config['manual_params'], dict):
-                raise ValueError("manual_params must be a dictionary")
+        """Получение гиперпараметров модели."""
+        if model_config['hyperparameter_mode'] == 'manual':
             return model_config['manual_params']
         
-        # Возвращаем дефолтные параметры для optuna
+        # Параметры по умолчанию для optuna
         return {
             'direction': 'minimize',
             'metric': 'val_loss',
@@ -502,88 +518,75 @@ class DatabaseManager:
             }
         }
 
-    def clean_old_data(self) -> None:
-        """Очистка старых данных с учетом конфигурации каждой метрики."""
-        self.logger.info("Начало очистки данных с учетом конфигурации метрик")
+    def clean_old_versions(self) -> None:
+        """Очистка старых версий моделей с учетом history_limit."""
+        self.logger.info("Начало очистки старых версий моделей")
         
         try:
-            with self.db_conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                # 1. Получаем все активные метрики
+            with self.db_conn.cursor() as cursor:
+                # Получаем все модели с их лимитами версий
                 cursor.execute("""
-                    SELECT m.id, m.name, ds.delta_threshold, ds.median_window,
-                           ds.percentile_threshold, ds.group_anomaly_confirmations
-                    FROM metrics m
-                    LEFT JOIN detector_settings ds ON m.id = ds.metric_id
-                    WHERE m.status = 'active'
+                    SELECT m.id, m.name, m.version_history
+                    FROM models m
                 """)
-                metrics = cursor.fetchall()
+                models = cursor.fetchall()
                 
-                if not metrics:
-                    self.logger.warning("Нет активных метрик для очистки")
+                if not models:
+                    self.logger.warning("Нет моделей для очистки версий")
                     return
                 
-                total_points_deleted = 0
-                total_anomalies_deleted = 0
+                total_deleted = 0
                 
-                # 2. Для каждой метрики определяем период хранения
-                for metric in metrics:
-                    metric_id = metric['id']
-                    metric_name = metric['name']
+                for model in models:
+                    model_id, model_name, version_history = model
                     
-                    # Определяем период хранения
-                    if metric['delta_threshold'] == 'auto':
-                        # Для auto берем максимальное из median_window и периода для групповой аномалии
-                        median_window = metric.get('median_window', '30m')
-                        median_seconds = self._parse_duration(median_window)
-                        
-                        # Период для групповой аномалии (confirmations * 60 секунд)
-                        group_seconds = metric.get('group_anomaly_confirmations', 20) * 60
-                        
-                        retention_seconds = max(median_seconds, group_seconds)
-                    else:
-                        # Для фиксированного delta_threshold храним только для групповой аномалии
-                        retention_seconds = metric.get('group_anomaly_confirmations', 20) * 60
+                    # Получаем количество текущих версий
+                    cursor.execute(
+                        "SELECT COUNT(*) FROM model_versions WHERE model_id = %s",
+                        (model_id,)
+                    )
+                    current_versions = cursor.fetchone()[0]
                     
-                    cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=retention_seconds)
+                    if current_versions <= version_history:
+                        self.logger.debug(
+                            f"Для модели {model_name} не требуется очистка "
+                            f"(текущие версии: {current_versions}, лимит: {version_history})"
+                        )
+                        continue
+                    
+                    # Определяем сколько версий нужно удалить
+                    to_delete = current_versions - version_history
+                    
+                    # Получаем ID старых версий для удаления
+                    cursor.execute("""
+                        SELECT id FROM model_versions
+                        WHERE model_id = %s
+                        ORDER BY created_at ASC
+                        LIMIT %s
+                    """, (model_id, to_delete))
+                    
+                    old_version_ids = [row[0] for row in cursor.fetchall()]
+                    
+                    # Удаляем старые версии
+                    cursor.execute(
+                        "DELETE FROM model_versions WHERE id = ANY(%s)",
+                        (old_version_ids,)
+                    )
+                    
+                    deleted = cursor.rowcount
+                    total_deleted += deleted
                     
                     self.logger.info(
-                        f"Очистка данных для метрики {metric_name} (ID: {metric_id}) "
-                        f"старше {retention_seconds//60} минут (до {cutoff_time})"
-                    )
-                    
-                    # Удаляем старые точки аномалий для этой метрики
-                    cursor.execute(
-                        "DELETE FROM anomaly_points WHERE metric_id = %s AND timestamp < %s",
-                        (metric_id, cutoff_time)
-                    )
-                    points_deleted = cursor.rowcount
-                    
-                    # Удаляем старые системные аномалии для этой метрики
-                    cursor.execute(
-                        """DELETE FROM anomaly_system 
-                        WHERE metric_id = %s AND end_time IS NOT NULL AND end_time < %s""",
-                        (metric_id, cutoff_time)
-                    )
-                    anomalies_deleted = cursor.rowcount
-                    
-                    total_points_deleted += points_deleted
-                    total_anomalies_deleted += anomalies_deleted
-                    
-                    self.logger.info(
-                        f"Для метрики {metric_name} удалено: "
-                        f"{points_deleted} точек, {anomalies_deleted} аномалий"
+                        f"Для модели {model_name} удалено {deleted} старых версий "
+                        f"(осталось: {version_history})"
                     )
                 
                 self.db_conn.commit()
-                self.logger.info(
-                    f"Очистка завершена. Всего удалено: "
-                    f"{total_points_deleted} точек аномалий, "
-                    f"{total_anomalies_deleted} системных аномалий"
-                )
+                self.logger.info(f"Очистка завершена. Всего удалено: {total_deleted} версий")
                 
         except Exception as e:
             self.db_conn.rollback()
-            self.logger.error(f"Ошибка при очистке данных: {str(e)}")
+            self.logger.error(f"Ошибка при очистке версий моделей: {str(e)}")
             raise
 
     def close(self) -> None:
@@ -595,7 +598,7 @@ class DatabaseManager:
 def main():
     """Точка входа для CLI."""
     parser = argparse.ArgumentParser(
-        description="Сервис управления базой данных для системы обнаружения аномалий"
+        description="Сервис управления базой данных для системы обучения моделей обнаружения аномалий"
     )
     parser.add_argument('--config', help="Путь к конфигурационному файлу")
     
@@ -605,18 +608,26 @@ def main():
     init_parser = subparsers.add_parser('init', help='Инициализация БД')
     
     # Команда clean
-    clean_parser = subparsers.add_parser('clean', help='Очистка старых данных')
+    clean_parser = subparsers.add_parser('clean', help='Очистка старых версий моделей')
     
     args = parser.parse_args()
     
+    # Проверяем обязательные переменные среды
+    required_env_vars = [ENV_VICTORIAMETRICS_URL, ENV_DB_CONN_STRING]
+    missing_vars = [var for var in required_env_vars if var not in os.environ]
+    
+    if missing_vars:
+        print(f"Ошибка: отсутствуют обязательные переменные среды: {', '.join(missing_vars)}")
+        exit(1)
+    
     manager = None
     try:
-        manager = DatabaseManager(args.config)
+        manager = MadTrainerDatabaseManager(args.config)
         
         if args.command == 'init':
             manager.init_database()
         elif args.command == 'clean':
-            manager.clean_old_data()
+            manager.clean_old_versions()
             
     except Exception as e:
         logging.error(f"Ошибка выполнения команды: {str(e)}", exc_info=True)

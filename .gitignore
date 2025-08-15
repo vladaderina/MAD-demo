@@ -21,3 +21,4 @@ src/mad/api/config.yaml
 src/mad/predictor/anomaly_detection.log
 src/mad/db-maintainer/anomaly_detection.log
 src/mad/detector/anomaly_detection.log
+.terraform.d

@@ -5,7 +5,7 @@ import json
 import os
 import pickle
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 
 import asyncpg
 import aiohttp
@@ -41,9 +41,13 @@ class ConfigError(Exception):
 class ModelTrainer:
     """Сервис обучения и переобучения моделей обнаружения аномалий."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, trainer_config_path: str = "trainer-config.yaml"):
         """Инициализация сервиса."""
-        self.config = self._load_config(config_path)
+        self.victoriametrics_url = self._get_required_env('VICTORIAMETRICS_URL')
+        self.db_conn_string = self._get_required_env('DB_CONN_STRING')
+        self.log_path = os.getenv('LOG_PATH', './anomaly_detection.log')
+        
+        self.trainer_config = self._load_trainer_config(trainer_config_path)
         self.db_pool = None
         self._setup_logging()
         self.task_queue = asyncio.Queue()
@@ -54,6 +58,13 @@ class ModelTrainer:
             web.get('/health', self.handle_health_check)
         ])
         
+    def _get_required_env(self, var_name: str) -> str:
+        """Получение обязательной переменной окружения."""
+        value = os.getenv(var_name)
+        if not value:
+            raise ConfigError(f"Требуется переменная окружения {var_name}")
+        return value
+        
     def _setup_logging(self) -> None:
         """Настройка системы логирования."""
         logger.setLevel(logging.INFO)
@@ -63,85 +74,56 @@ class ModelTrainer:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         
-        log_path = self.config['general'].get('log_path', './model_trainer.log')
         try:
             file_handler = RotatingFileHandler(
-                log_path,
+                self.log_path,
                 maxBytes=5*1024*1024,
                 backupCount=3
             )
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         except IOError as e:
-            logger.error(f"Не удалось открыть файл логов {log_path}: {str(e)}")
+            logger.error(f"Не удалось открыть файл логов {self.log_path}: {str(e)}")
             
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-        
-    def _load_config(self, config_path: Optional[str]) -> Dict:
-        """Загрузка конфигурации из файла и переменных окружения."""
-        config = {
-            'general': {},
-            'metrics': [],
-            'models': [],
-            'mad-components': {'mad-trainer': {}}
-        }
-        
-        if config_path:
-            try:
-                with open(config_path, "r") as f:
-                    file_config = yaml.safe_load(f) or {}
-                    config.update(file_config)
-            except FileNotFoundError:
-                logger.warning(f"Файл конфигурации не найден: {config_path}")
-            except yaml.YAMLError as e:
-                logger.error(f"Ошибка парсинга YAML: {str(e)}")
-                raise ConfigError(f"Ошибка в конфигурационном файле: {str(e)}")
-        
-        # Переопределение параметров из переменных окружения
-        env_mapping = {
-            'VICTORIAMETRICS_URL': ('general', 'victoriametrics_url'),
-            'DB_CONN_STRING': ('general', 'db_conn_string'),
-            'LOG_PATH': ('general', 'log_path'),
-            'WORKERS': ('mad-components', 'mad-trainer', 'workers'),
-            'HOST': ('mad-components', 'mad-trainer', 'host'),
-            'PORT': ('mad-components', 'mad-trainer', 'port'),
-            'DETECTOR_SERVICE_URL': ('mad-components', 'mad-trainer', 'detector_service_url')
-        }
-        
-        for env_var, config_path in env_mapping.items():
-            value = os.getenv(env_var)
-            if value is not None:
-                current = config
-                for part in config_path[:-1]:
-                    current = current.setdefault(part, {})
-                current[config_path[-1]] = value
-        
-        # Валидация обязательных параметров
-        required_params = [
-            ('general', 'victoriametrics_url'),
-            ('general', 'db_conn_string')
-        ]
-        
-        missing = []
-        for path in required_params:
-            current = config
-            try:
-                for part in path:
-                    current = current[part]
-            except KeyError:
-                missing.append('.'.join(path))
-        
-        if missing:
-            raise ConfigError(f"Отсутствуют обязательные параметры: {', '.join(missing)}")
-                
-        return config
+    
+    def _load_trainer_config(self, config_path: str) -> Dict:
+        """Загрузка конфигурации для тренера."""
+        try:
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f) or {}
+            return config
+        except FileNotFoundError:
+            logger.warning(f"Файл конфигурации тренера не найден: {config_path}")
+            return {}
+        except yaml.YAMLError as e:
+            logger.error(f"Ошибка парсинга YAML конфигурации тренера: {str(e)}")
+            return {}
+    
+    def _get_model_config(self, model_name: str) -> Optional[Dict]:
+        """Получение конфигурации модели по имени."""
+        # Теперь модели хранятся только в конфиге тренера
+        return next(
+            (m for m in self.trainer_config.get('models', []) 
+             if m['name'] == model_name),
+            None
+        )
+    
+    def _get_metric_config(self, metric_name: str) -> Optional[Dict]:
+        """Получение конфигурации метрики по имени."""
+        # Метрики теперь хранятся только в конфиге тренера
+        return next(
+            (m for m in self.trainer_config.get('metrics', []) 
+             if m['name'] == metric_name),
+            None
+        )
     
     async def _create_db_pool(self) -> asyncpg.Pool:
         """Создание пула подключений к PostgreSQL."""
         try:
-            db_config = self._parse_db_conn_string(self.config['general']['db_conn_string'])
+            db_config = self._parse_db_conn_string(self.db_conn_string)
             return await asyncpg.create_pool(**db_config)
         except Exception as e:
             logger.error(f"Ошибка создания пула подключений: {str(e)}")
@@ -277,14 +259,15 @@ class ModelTrainer:
     
     async def _notify_model_ready(self, model_id: int) -> None:
         """Отправка уведомления о готовности модели."""
-        if not self.config['system'].get('detector_service_url'):
+        detector_service_url = os.getenv('DETECTOR_SERVICE_URL')
+        if not detector_service_url:
             logger.debug("URL сервиса обнаружения не задан, пропускаем отправку")
             return
             
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.config['system']['detector_service_url']}/api/v1/model_ready",
+                    f"{detector_service_url}/api/v1/model_ready",
                     json={'model_id': model_id},
                     timeout=5
                 ) as resp:
@@ -316,29 +299,22 @@ class ModelTrainer:
         except Exception as e:
             logger.error(f"Ошибка загрузки ожидающих моделей: {str(e)}")
     
-    async def _fetch_metric_data(self, metric_name: str) -> pd.DataFrame:
+    async def _fetch_metric_data(self, metric_name: str, time_range: Tuple[datetime, datetime]) -> pd.DataFrame:
         """Получение данных метрики из VictoriaMetrics."""
+        metric_config = self._get_metric_config(metric_name)
+        if not metric_config:
+            raise ValueError(f"Метрика '{metric_name}' не найдена в конфигурации")
+
+        start_time, end_time = time_range
+        url = f"{self.victoriametrics_url}/query_range"
+        params = {
+            "query": metric_config["query"],
+            "start": int(start_time.timestamp()),
+            "end": int(end_time.timestamp()),
+            "step": "15s"  # По умолчанию, можно добавить в конфиг метрики
+        }
+
         try:
-            async with self.db_pool.acquire() as conn:
-                metric = await conn.fetchrow("""
-                    SELECT id, query, step FROM metrics 
-                    WHERE name = $1 AND status = 'active'
-                """, metric_name)
-            
-            if not metric:
-                raise ValueError(f"Метрика '{metric_name}' не найдена")
-
-            end_time = datetime.now(timezone.utc)
-            start_time = end_time - timedelta(hours=1)
-            
-            url = f"{self.config['system']['victoriametrics_url']}/query_range"
-            params = {
-                "query": metric["query"],
-                "start": int(start_time.timestamp()),
-                "end": int(end_time.timestamp()),
-                "step": f"{metric['step']}s"
-            }
-
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params, timeout=30) as resp:
                     result = await resp.json()
@@ -352,6 +328,25 @@ class ModelTrainer:
         except Exception as e:
             logger.error(f"Ошибка получения данных метрики: {str(e)}")
             raise
+    
+    async def _get_training_period(self, model_config: Dict) -> Tuple[datetime, datetime]:
+        """Получение периода обучения для модели."""
+        training_period = model_config.get('training_period', {})
+        
+        if 'fixed_range' in training_period:
+            fixed = training_period['fixed_range']
+            start = datetime.fromisoformat(fixed['start'])
+            end = datetime.fromisoformat(fixed['end'])
+            return start, end
+        elif 'auto_range' in training_period:
+            auto = training_period['auto_range']
+            end = datetime.now(timezone.utc)
+            start = end - timedelta(days=int(auto['lookback_period'][:-1]))
+            return start, end
+        
+        # По умолчанию - последние 7 дней
+        end = datetime.now(timezone.utc)
+        return end - timedelta(days=7), end
     
     async def _process_model(self, model_id: int) -> None:
         """Обработка модели из очереди на обучение."""
@@ -380,9 +375,20 @@ class ModelTrainer:
 
                     logger.info(f"Обработка модели: {model['model_name']} (v{model['version']})")
 
+                    # Получаем конфигурацию модели
+                    model_config = self._get_model_config(model['model_name'])
+                    if not model_config:
+                        raise ValueError(f"Конфигурация модели {model['model_name']} не найдена")
+
+                    # Получаем период обучения
+                    training_start, training_end = await self._get_training_period(model_config)
+
                     # Получаем данные для обучения
                     try:
-                        metric_data = await self._fetch_metric_data(model['metric_name'])
+                        metric_data = await self._fetch_metric_data(
+                            model['metric_name'],
+                            (training_start, training_end)
+                        )
                         if metric_data.empty:
                             raise ValueError("Нет данных для обучения")
                         logger.info(f"Получено {len(metric_data)} точек данных")
@@ -398,10 +404,21 @@ class ModelTrainer:
                     # Обучаем модель
                     try:
                         logger.info("Запуск обучения модели...")
+                        
+                        # Получаем гиперпараметры в зависимости от режима
+                        if model['hyperparams_mode'] == 'optuna' and self.trainer_config.get('optuna_tuning'):
+                            hyperparams = await self._optimize_hyperparameters(
+                                metric_data, 
+                                model_config,
+                                model['model_name']
+                            )
+                        else:
+                            hyperparams = model_config.get('manual_params', {})
+                        
                         training_result = await asyncio.to_thread(
                             self._train_lstm_model, 
                             metric_data, 
-                            model['hyperparams'],
+                            hyperparams,
                             model['model_name']
                         )
                         logger.info("Обучение успешно завершено")
@@ -443,8 +460,7 @@ class ModelTrainer:
                         logger.info("Модель успешно сохранена")
                         
                         # Отправляем уведомление о готовности модели
-                        if self.config['system'].get('detector_service_url'):
-                            await self._notify_model_ready(model['model_id'])
+                        await self._notify_model_ready(model['model_id'])
                             
                     except Exception as e:
                         logger.error(f"Ошибка сохранения модели: {str(e)}")
@@ -468,6 +484,94 @@ class ModelTrainer:
                     """, model_id)
             except Exception as e:
                 logger.error(f"Ошибка обновления статуса модели: {str(e)}")
+    
+    async def _optimize_hyperparameters(self, data: pd.DataFrame, 
+                                      model_config: Dict, model_name: str) -> Dict:
+        """Оптимизация гиперпараметров с использованием Optuna."""
+        if not self.trainer_config.get('optuna_tuning'):
+            return {}
+            
+        optuna_config = self.trainer_config['optuna_tuning']
+        
+        def objective(trial):
+            # Параметры из конфигурации Optuna
+            params = {
+                'window_size': trial.suggest_int('window_size', 12, 48, step=6),
+                'layers': [],
+                'learning_rate': trial.suggest_float(
+                    'learning_rate',
+                    optuna_config['hyperparameter_ranges']['learning_rate']['min'],
+                    optuna_config['hyperparameter_ranges']['learning_rate']['max'],
+                    log=optuna_config['hyperparameter_ranges']['learning_rate'].get('log', False)
+                ),
+                'batch_size': trial.suggest_categorical(
+                    'batch_size',
+                    optuna_config['hyperparameter_ranges']['batch_size']
+                ),
+                'dropout': trial.suggest_float(
+                    'dropout',
+                    optuna_config['hyperparameter_ranges']['dropout']['min'],
+                    optuna_config['hyperparameter_ranges']['dropout']['max']
+                ),
+                'epochs': trial.suggest_int(
+                    'epochs',
+                    optuna_config['hyperparameter_ranges']['epochs']['min'],
+                    optuna_config['hyperparameter_ranges']['epochs']['max']
+                )
+            }
+            
+            # Добавляем слои из конфигурации
+            for layer_cfg in optuna_config['hyperparameter_ranges']['layers']:
+                if layer_cfg['type'] == 'LSTM':
+                    params['layers'].append({
+                        'type': 'LSTM',
+                        'units': trial.suggest_int(
+                            f"lstm_units_{len(params['layers'])}",
+                            layer_cfg['units']['min'],
+                            layer_cfg['units']['max'],
+                            step=layer_cfg['units'].get('step', 32)
+                        ),
+                        'return_sequences': trial.suggest_categorical(
+                            f"lstm_return_seq_{len(params['layers'])}",
+                            layer_cfg['return_sequences']
+                        )
+                    })
+                elif layer_cfg['type'] == 'Dense':
+                    params['layers'].append({
+                        'type': 'Dense',
+                        'units': trial.suggest_int(
+                            f"dense_units_{len(params['layers'])}",
+                            layer_cfg['units']['min'],
+                            layer_cfg['units']['max']
+                        )
+                    })
+            
+            # Фиксированные параметры
+            params.update({
+                'loss': optuna_config['fixed_parameters']['loss'],
+                'optimizer': optuna_config['fixed_parameters']['optimizer'],
+                'validation_split': optuna_config['fixed_parameters']['validation_split']
+            })
+            
+            # Обучаем модель с текущими параметрами
+            try:
+                result = self._train_lstm_model(data, params, f"{model_name}_trial_{trial.number}")
+                return result['history']['val_loss'][-1]
+            except Exception as e:
+                logger.error(f"Ошибка в trial {trial.number}: {str(e)}")
+                return float('inf')
+        
+        study = optuna.create_study(
+            direction=optuna_config['direction'],
+            sampler=TPESampler(),
+            pruner=HyperbandPruner()
+        )
+        
+        logger.info(f"Начало оптимизации гиперпараметров для модели {model_name}")
+        study.optimize(objective, n_trials=optuna_config['n_trials'])
+        logger.info(f"Оптимизация завершена. Лучшие параметры: {study.best_params}")
+        
+        return study.best_params
     
     def _train_lstm_model(self, dataframe: pd.DataFrame, hyperparams: Dict, model_name: str) -> Dict:
         """Обучение LSTM модели."""
@@ -617,29 +721,20 @@ class ModelTrainer:
             return int(interval_str[:-1]) * 24
         return DEFAULT_RETRAIN_INTERVAL
     
-    def _get_model_config(self, model_name: str) -> Optional[Dict]:
-        """Получение конфигурации модели по имени."""
-        return next(
-            (m for m in self.config.get('mad-predictor', {}).get('models', []) 
-             if m['name'] == model_name),
-            None
-        )
-    
     async def _retrain_checker(self) -> None:
         """Периодическая проверка необходимости переобучения моделей."""
         while True:
             try:
-                if self.config['system'].get('enable_retrain_checker', True):
-                    models_to_retrain = await self._check_retrain_required()
-                    for model_id in models_to_retrain:
-                        await self.handle_retrain_request(web.Request(
-                            method='POST',
-                            path='/api/v1/retrain',
-                            match_info={},
-                            headers={},
-                            content_type='application/json',
-                            body=json.dumps({'model_id': model_id}).encode()
-                        ))
+                models_to_retrain = await self._check_retrain_required()
+                for model_id in models_to_retrain:
+                    await self.handle_retrain_request(web.Request(
+                        method='POST',
+                        path='/api/v1/retrain',
+                        match_info={},
+                        headers={},
+                        content_type='application/json',
+                        body=json.dumps({'model_id': model_id}).encode()
+                    ))
                 await asyncio.sleep(3600)  # Проверка каждый час
             except Exception as e:
                 logger.error(f"Ошибка в планировщике переобучения: {str(e)}")
@@ -677,18 +772,17 @@ class ModelTrainer:
             runner = web.AppRunner(self.app)
             await runner.setup()
             
-            site = web.TCPSite(
-                runner, 
-                self.config['system'].get('host', '0.0.0.0'),
-                self.config['system'].get('port', 8080)
-            )
+            host = os.getenv('HOST', '0.0.0.0')
+            port = int(os.getenv('PORT', 8080))
+            
+            site = web.TCPSite(runner, host, port)
             await site.start()
-            logger.info(f"HTTP сервер запущен на {site.name}")
+            logger.info(f"HTTP сервер запущен на {host}:{port}")
             
             # Запуск воркеров
             workers = [
                 asyncio.create_task(self._worker_loop()) 
-                for _ in range(self.config["system"].get("workers", 3))
+                for _ in range(int(os.getenv('WORKERS', 3)))
             ]
             
             # Запуск планировщика переобучения
@@ -707,8 +801,9 @@ class ModelTrainer:
 async def main():
     """Основная функция для запуска сервиса."""
     try:
-        config_path = os.getenv('CONFIG_PATH')
-        service = ModelTrainer(config_path)
+        trainer_config_path = os.getenv('TRAINER_CONFIG_PATH', 'mad-trainer-config.yaml')
+        
+        service = ModelTrainer(trainer_config_path)
         await service.start()
     except ConfigError as e:
         logger.error(f"Ошибка конфигурации: {str(e)}")

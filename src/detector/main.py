@@ -4,7 +4,7 @@ import os
 import threading
 import queue
 import asyncio
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta, timezone
 import pickle
 import time
@@ -27,7 +27,7 @@ ANOMALY_THRESHOLD_MULTIPLIER = 3  # множитель для порога ан�
 class AnomalyDetectionService:
     """Сервис обнаружения аномалий на основе моделей машинного обучения."""
 
-    def __init__(self, config_path: str = "detector_config.yaml"):
+    def __init__(self, config_path: str = "mad-detector-config.yaml"):
         """Инициализация сервиса."""
         self._load_environment_vars()
         self._setup_logging()
@@ -48,21 +48,56 @@ class AnomalyDetectionService:
         self.notifier_url = os.getenv('NOTIFIER_SERVICE_URL')
         
     def _load_config(self, config_path: str) -> Dict:
-        """Загрузка конфигурационного файла для детектора."""
+        """Загрузка конфигурационного файла нового формата."""
         try:
             with open(config_path, 'r') as f:
                 config = yaml.safe_load(f) or {}
                 
-            if 'mad-components' not in config:
-                raise ValueError("Конфиг должен содержать раздел 'mad-components'")
+            # Валидация конфига
+            if not isinstance(config, dict):
+                raise ValueError("Конфигурационный файл должен быть словарем")
+                
+            # Проверка наличия обязательных разделов
+            if 'points_anomaly' not in config:
+                config['points_anomaly'] = []
+                
+            if 'system_anomaly' not in config:
+                config['system_anomaly'] = {
+                    'percentile_threshold': 0.95,
+                    'min_confirmations': {
+                        'group_anomaly': 20,
+                        'local_anomaly': 3,
+                        'global_anomaly': 1
+                    }
+                }
                 
             return config
         except FileNotFoundError:
             self.logger.error(f"Конфигурационный файл не найден: {config_path}")
-            return {'mad-components': {'mad-detector': {}}}
+            return {
+                'points_anomaly': [],
+                'system_anomaly': {
+                    'percentile_threshold': 0.95,
+                    'min_confirmations': {
+                        'group_anomaly': 20,
+                        'local_anomaly': 3,
+                        'global_anomaly': 1
+                    }
+                }
+            }
         except yaml.YAMLError as e:
             self.logger.error(f"Ошибка парсинга YAML: {str(e)}")
-            return {'mad-components': {'mad-detector': {}}}
+            return {
+                'points_anomaly': [],
+                'system_anomaly': {
+                    'percentile_threshold': 0.95,
+                    'min_confirmations': {
+                        'group_anomaly': 20,
+                        'local_anomaly': 3,
+                        'global_anomaly': 1
+                    }
+                }
+            }
 
     def _setup_logging(self) -> None:
         """Настройка системы логирования."""
@@ -108,9 +143,6 @@ class AnomalyDetectionService:
         except Exception as e:
             raise ValueError(f"Неверный формат DB_CONN_STRING: {str(e)}")
         
-        # Получаем конфигурацию детектора
-        detector_config = self.config.get('mad-components', {}).get('mad-detector', {})
-        
         # Кэш загруженных моделей
         self.models_cache: Dict[int, Any] = {}
         # Активные модели (метаданные)
@@ -124,7 +156,7 @@ class AnomalyDetectionService:
         self.stop_event = threading.Event()
         
         # Параметры для определения аномалий из конфига
-        system_anomaly_config = detector_config.get('system_anomaly', {})
+        system_anomaly_config = self.config.get('system_anomaly', {})
         self.anomaly_params = {
             'local': system_anomaly_config.get('min_confirmations', {}).get('local_anomaly', 3),
             'group': system_anomaly_config.get('min_confirmations', {}).get('group_anomaly', 20),
@@ -272,29 +304,34 @@ class AnomalyDetectionService:
         except Exception as e:
             self.logger.error(f"Ошибка обработки модели {model_id}: {str(e)}", exc_info=True)
 
+    def _get_metric_config(self, metric_query: str) -> Optional[Dict]:
+        """Получение конфигурации для конкретной метрики."""
+        for metric_config in self.config.get('points_anomaly', []):
+            if metric_config.get('metric') == metric_query:
+                return metric_config
+        return None
+
     def _get_threshold_for_metric(self, model_id: int, metric_query: str) -> float:
         """Определение порога для метрики с учетом конфига."""
-        if not hasattr(self, 'config') or 'mad-components' not in self.config:
+        metric_config = self._get_metric_config(metric_query)
+        
+        if not metric_config:
+            # Если нет конфига для метрики, используем дефолтный метод
             return self._get_anomaly_threshold(model_id)
             
-        # Получаем конфигурацию детектора
-        detector_config = self.config['mad-components'].get('mad-detector', {})
+        delta_threshold = metric_config.get('delta_threshold')
         
-        # Ищем конфигурацию для этой метрики в points_anomaly
-        for metric_cfg in detector_config.get('points_anomaly', []):
-            if metric_cfg.get('metric') == metric_query:
-                if metric_cfg.get('delta_threshold') != 'auto':
-                    try:
-                        return float(metric_cfg['delta_threshold'])
-                    except (ValueError, TypeError):
-                        self.logger.warning(f"Некорректное значение delta_threshold для {metric_query}")
-                        break
-                # Если порог 'auto', используем median_window из конфига
-                window = metric_cfg.get('median_window', '30m')
-                return self._get_anomaly_threshold(model_id, window)
-        
-        # Если не нашли конфига для метрики, используем дефолтные значения
-        return self._get_anomaly_threshold(model_id)
+        if delta_threshold == 'auto':
+            # Автоматический расчет порога с указанным окном
+            window = metric_config.get('median_window', '30m')
+            return self._get_anomaly_threshold(model_id, window)
+        else:
+            # Фиксированный порог из конфига
+            try:
+                return float(delta_threshold)
+            except (ValueError, TypeError):
+                self.logger.warning(f"Некорректное значение delta_threshold для {metric_query}, используется автоматический расчет")
+                return self._get_anomaly_threshold(model_id)
 
     def _get_metric_query(self, metric_id: int) -> str:
         """Получение query метрики по ID."""
