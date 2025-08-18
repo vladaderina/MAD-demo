@@ -8,7 +8,6 @@ from typing import Optional, Tuple
 import asyncpg
 import aiohttp
 
-
 class RetrainScheduler:
     """Service for scheduling model retraining for a single model."""
     
