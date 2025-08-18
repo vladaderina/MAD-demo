@@ -2,6 +2,7 @@ general:
   victoriametrics_url: "http://80.93.60.49:30429/api/v1" # VICTORIAMETRICS_URL trainer/detector
   db_conn_string: "postgresql://mad:secretPASSW0rd@80.93.60.49:30000/ml_models" # DB_CONN_STRING api/maintainer/detector/trainer
   log_path: "./anomaly_detection.log" # LOG_PATH всем
+  config_dir: "./config"
   pullPolicy: "Always"
 
 mad_components:

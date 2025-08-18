@@ -23,11 +23,13 @@ spec:
           env:
             - name: LOG_PATH
               value: "{{ .Values.general.log_path }}"
+            - name: CONFIG_PATH
+              value: "{{ .Values.general.config_path }}/general-config.yaml"
           volumeMounts:
-            - name: config-volume
-              mountPath: /app/config
+            - mountPath: /app/config
+              name: config
       restartPolicy: OnFailure
       volumes:
-        - name: config-volume
+        - name: config
           configMap:
             name: maintainer-config

@@ -14,14 +14,13 @@ DEFAULT_LOG_PATH = '/var/log/mad_trainer.log'
 MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
 LOG_BACKUP_COUNT = 3
 DEFAULT_CONFIG_DIR = '/app/config'
-DEFAULT_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/default_mad_trainer_config.yaml'
-USER_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/mad-trainer-config.yaml'
-DEFAULT_DB_PORT = '5432'
+DEFAULT_CONFIG_PATH = f'{DEFAULT_CONFIG_DIR}/default_config.yaml'
 
 # Имена переменных среды
 ENV_VICTORIAMETRICS_URL = 'VICTORIAMETRICS_URL'
 ENV_DB_CONN_STRING = 'DB_CONN_STRING'
 ENV_LOG_PATH = 'LOG_PATH'
+ENV_USER_CONFIG_PATH = 'CONFIG_PATH'
 
 class MadTrainerDatabaseManager:
     """Сервис управления базой данных для системы обучения моделей обнаружения аномалий."""
@@ -69,7 +68,7 @@ class MadTrainerDatabaseManager:
             os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
             
             # Определяем путь к пользовательскому конфигу
-            user_config_path = config_path if config_path else USER_CONFIG_PATH
+            user_config_path = config_path or os.getenv(ENV_USER_CONFIG_PATH, f'{DEFAULT_CONFIG_DIR}/mad-trainer-config.yaml')
             
             if not Path(user_config_path).exists():
                 raise FileNotFoundError(f"Конфигурационный файл не найден: {user_config_path}")
@@ -600,7 +599,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Сервис управления базой данных для системы обучения моделей обнаружения аномалий"
     )
-    parser.add_argument('--config', help="Путь к конфигурационному файлу")
+    parser.add_argument('--config', help="Путь к конфигурационному файлу (переопределяет USER_CONFIG_PATH)")
     
     subparsers = parser.add_subparsers(dest='command', required=True)
     

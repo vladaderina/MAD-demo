@@ -18,7 +18,7 @@ metadata:
   labels:
     app: detector
 data:
-  config.yaml: |-
+  detector-сonfig.yaml: |-
     {{ .Files.Get "detector-config.yaml" | nindent 4 }}
 ---
 apiVersion: v1

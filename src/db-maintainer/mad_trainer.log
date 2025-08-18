@@ -1,0 +1,8 @@
+[ERROR] 2025-08-18 09:24:02 - MadTrainerDB - Ошибка загрузки конфигурации: Конфигурационный файл не найден: /app/config/mad-trainer-config.yaml
+[INFO] 2025-08-18 09:24:34 - MadTrainerDB - Сервис управления БД MAD Trainer инициализирован
+[INFO] 2025-08-18 09:24:34 - MadTrainerDB - Начало инициализации БД MAD Trainer
+[ERROR] 2025-08-18 09:24:34 - MadTrainerDB - Ошибка инициализации БД: column "interpolation" of relation "metrics" does not exist
+LINE 2: ...                INSERT INTO metrics (name, query, interpolat...
+                                                             ^
+
+[INFO] 2025-08-18 09:24:34 - MadTrainerDB - Соединение с БД закрыто
