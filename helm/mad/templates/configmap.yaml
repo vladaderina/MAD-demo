@@ -28,7 +28,8 @@ metadata:
   labels:
     app: maintainer
   annotations:
-    "helm.sh/hook-weight": 1
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "1"
 data:
   general-config.yaml: |-
     {{ .Files.Get "general-config.yaml" | nindent 4 }}
