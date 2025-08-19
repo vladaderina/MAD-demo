@@ -1,0 +1,18 @@
+[submodule "src/mad-trainer"]
+	path = src/mad-trainer
+	url = https://github.com/vladaderina/mad-trainer.git
+[submodule "src/mad-scheduler"]
+	path = src/mad-scheduler
+	url = https://github.com/vladaderina/mad-scheduler.git
+[submodule "src/mad-detector"]
+	path = src/mad-detector
+	url = https://github.com/vladaderina/mad-detector.git
+[submodule "src/mad-notifier"]
+	path = src/mad-notifier
+	url = https://github.com/vladaderina/mad-notifier.git
+[submodule "src/mad-api"]
+	path = src/mad-api
+	url = https://github.com/vladaderina/mad-api.git
+[submodule "src/mad-maintainer"]
+	path = src/mad-maintainer
+	url = https://github.com/vladaderina/mad-maintainer.git

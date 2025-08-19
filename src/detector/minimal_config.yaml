@@ -1,6 +1,0 @@
-detector:
-  system_anomaly:
-    min_confirmations:
-      local_anomaly: 3
-      group_anomaly: 5
-      global_anomaly: 10
