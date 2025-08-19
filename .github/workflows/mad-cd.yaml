@@ -12,8 +12,8 @@ on:
 
 env:
   HELM_CHART_DIR: MAD-demo/helm/mad
-  RELEASE_NAME: mad-app
-  NAMESPACE: mad-namespace
+  RELEASE_NAME: mad
+  NAMESPACE: mad
 
 jobs:
   lint-test:
