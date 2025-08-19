@@ -1,0 +1,134 @@
+name: MAD Helm Deploy Pipeline
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'MAD-demo/helm/mad/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'MAD-demo/helm/mad/**'
+
+env:
+  HELM_CHART_DIR: MAD-demo/helm/mad
+  RELEASE_NAME: mad
+  NAMESPACE: mad
+
+jobs:
+  lint-test:
+    runs-on: self-hosted
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Helm
+      run: |
+        helm version
+
+    - name: Lint Helm chart
+      run: |
+        helm lint $HELM_CHART_DIR
+
+    - name: Template test
+      run: |
+        helm template $RELEASE_NAME $HELM_CHART_DIR --namespace $NAMESPACE --dry-run
+
+  dry-run:
+    runs-on: self-hosted
+    needs: lint-test
+    if: github.event_name == 'pull_request'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Dry-run deployment
+      run: |
+        helm upgrade $RELEASE_NAME $HELM_CHART_DIR \
+          --namespace $NAMESPACE \
+          --install \
+          --dry-run \
+          --atomic
+
+  determine-deployment-type:
+    runs-on: self-hosted
+    needs: lint-test
+    if: github.event_name == 'push'
+    outputs:
+      deployment_type: ${{ steps.detect-type.outputs.deployment_type }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Detect deployment type
+      id: detect-type
+      run: |
+        # Проверяем, существует ли релиз
+        if helm status $RELEASE_NAME --namespace $NAMESPACE 2>/dev/null; then
+          echo "deployment_type=upgrade" >> $GITHUB_OUTPUT
+          echo "Release exists, performing upgrade"
+        else
+          echo "deployment_type=install" >> $GITHUB_OUTPUT
+          echo "Release doesn't exist, performing install"
+        fi
+
+    - name: Show changes
+      run: |
+        # Показываем diff изменений
+        helm diff upgrade $RELEASE_NAME $HELM_CHART_DIR \
+          --namespace $NAMESPACE \
+          --allow-unreleased \
+          --context 5
+
+  deploy:
+    runs-on: self-hosted
+    needs: determine-deployment-type
+    if: github.event_name == 'push' && needs.determine-deployment-type.outputs.changes_detected == 'true'
+    environment: production
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy Helm chart
+      run: |
+        echo "Performing ${{ needs.determine-deployment-type.outputs.deployment_type }}"
+        
+        # Для install и upgrade немного разная логика
+        if [ "${{ needs.determine-deployment-type.outputs.deployment_type }}" = "install" ]; then
+          helm install $RELEASE_NAME $HELM_CHART_DIR \
+            --namespace $NAMESPACE \
+            --create-namespace \
+            --timeout 5m \
+            --wait
+        else
+          helm upgrade $RELEASE_NAME $HELM_CHART_DIR \
+            --namespace $NAMESPACE \
+            --install \
+            --timeout 5m \
+            --wait \
+            --atomic
+        fi
+
+    - name: Verify deployment
+      run: |
+        # Ждем пока все поды перейдут в Ready
+        kubectl wait --for=condition=Ready pods --all -n $NAMESPACE --timeout=300s
+        
+        # Проверяем статус релиза
+        helm status $RELEASE_NAME --namespace $NAMESPACE
+
+  rollback-on-failure:
+    runs-on: self-hosted
+    needs: deploy
+    if: failure() && github.event_name == 'push'
+    steps:
+    - name: Rollback on failure
+      run: |
+        if helm history $RELEASE_NAME --namespace $NAMESPACE | grep -q "FAILED"; then
+          echo "Rolling back failed deployment..."
+          helm rollback $RELEASE_NAME --namespace $NAMESPACE
+        fi
+      continue-on-error: true
