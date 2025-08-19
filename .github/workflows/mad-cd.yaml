@@ -1,4 +1,5 @@
-name: MAD Helm Deploy Pipeline
+name: Helm Deploy Pipeline
+
 on:
   push:
     branches: [ main ]
@@ -11,8 +12,8 @@ on:
 
 env:
   HELM_CHART_DIR: MAD-demo/helm/mad
-  RELEASE_NAME: mad
-  NAMESPACE: mad
+  RELEASE_NAME: mad-app
+  NAMESPACE: mad-namespace
 
 jobs:
   lint-test:
@@ -20,20 +21,21 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Set up Helm
-      run: |
-        helm version
+      run: helm version
 
     - name: Lint Helm chart
-      run: |
-        helm lint $HELM_CHART_DIR
+      run: helm lint $HELM_CHART_DIR
 
-    - name: Template test
+    - name: Template test (with secrets placeholder)
       run: |
-        helm template $RELEASE_NAME $HELM_CHART_DIR --namespace $NAMESPACE --dry-run
+        helm template $RELEASE_NAME $HELM_CHART_DIR \
+          --namespace $NAMESPACE \
+          --set general.victoriametrics_url="placeholder" \
+          --set general.db_conn_string="placeholder" \
+          --set mad_components.mad_notifier.bot_token="placeholder" \
+          --set mad_components.mad_notifier.chat_id="placeholder"
 
   dry-run:
     runs-on: self-hosted
@@ -43,13 +45,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Dry-run deployment
+    - name: Dry-run deployment (with placeholder secrets)
       run: |
         helm upgrade $RELEASE_NAME $HELM_CHART_DIR \
           --namespace $NAMESPACE \
           --install \
           --dry-run \
-          --atomic
+          --set general.victoriametrics_url="placeholder" \
+          --set general.db_conn_string="placeholder" \
+          --set mad_components.mad_notifier.bot_token="placeholder" \
+          --set mad_components.mad_notifier.chat_id="placeholder"
 
   determine-deployment-type:
     runs-on: self-hosted
@@ -66,69 +71,48 @@ jobs:
     - name: Detect deployment type
       id: detect-type
       run: |
-        # Проверяем, существует ли релиз
-        if helm status $RELEASE_NAME --namespace $NAMESPACE 2>/dev/null; then
+        if helm status $RELEASE_NAME --namespace $NAMESPACE >/dev/null 2>&1; then
           echo "deployment_type=upgrade" >> $GITHUB_OUTPUT
-          echo "Release exists, performing upgrade"
         else
           echo "deployment_type=install" >> $GITHUB_OUTPUT
-          echo "Release doesn't exist, performing install"
         fi
 
-    - name: Show changes
+    - name: Show changes (with placeholder secrets)
       run: |
-        # Показываем diff изменений
         helm diff upgrade $RELEASE_NAME $HELM_CHART_DIR \
           --namespace $NAMESPACE \
           --allow-unreleased \
-          --context 5
+          --context 5 \
+          --set general.victoriametrics_url="placeholder" \
+          --set general.db_conn_string="placeholder" \
+          --set mad_components.mad_notifier.bot_token="placeholder" \
+          --set mad_components.mad_notifier.chat_id="placeholder"
 
   deploy:
     runs-on: self-hosted
     needs: determine-deployment-type
-    if: github.event_name == 'push' && needs.determine-deployment-type.outputs.changes_detected == 'true'
+    if: github.event_name == 'push'
     environment: production
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Deploy Helm chart
+    - name: Deploy Helm chart with secrets
       run: |
         echo "Performing ${{ needs.determine-deployment-type.outputs.deployment_type }}"
         
-        # Для install и upgrade немного разная логика
-        if [ "${{ needs.determine-deployment-type.outputs.deployment_type }}" = "install" ]; then
-          helm install $RELEASE_NAME $HELM_CHART_DIR \
-            --namespace $NAMESPACE \
-            --create-namespace \
-            --timeout 5m \
-            --wait
-        else
-          helm upgrade $RELEASE_NAME $HELM_CHART_DIR \
-            --namespace $NAMESPACE \
-            --install \
-            --timeout 5m \
-            --wait \
-            --atomic
-        fi
+        helm upgrade $RELEASE_NAME $HELM_CHART_DIR \
+          --namespace $NAMESPACE \
+          --install \
+          --atomic \
+          --timeout 5m \
+          --create-namespace \
+          --set general.victoriametrics_url="${{ secrets.VICTORIAMETRICS_URL }}" \
+          --set general.db_conn_string="${{ secrets.DB_CONN_STRING }}" \
+          --set mad_components.mad_notifier.bot_token="${{ secrets.BOT_TOKEN }}" \
+          --set mad_components.mad_notifier.chat_id="${{ secrets.CHAT_ID }}"
 
     - name: Verify deployment
       run: |
-        # Ждем пока все поды перейдут в Ready
         kubectl wait --for=condition=Ready pods --all -n $NAMESPACE --timeout=300s
-        
-        # Проверяем статус релиза
         helm status $RELEASE_NAME --namespace $NAMESPACE
-
-  rollback-on-failure:
-    runs-on: self-hosted
-    needs: deploy
-    if: failure() && github.event_name == 'push'
-    steps:
-    - name: Rollback on failure
-      run: |
-        if helm history $RELEASE_NAME --namespace $NAMESPACE | grep -q "FAILED"; then
-          echo "Rolling back failed deployment..."
-          helm rollback $RELEASE_NAME --namespace $NAMESPACE
-        fi
-      continue-on-error: true
