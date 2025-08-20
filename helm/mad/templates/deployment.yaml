@@ -110,11 +110,11 @@ spec:
           volumeMounts:
             - mountPath: /app/config
               name: config
+      volumes:
+        - name: config
+          configMap:
+            name: detector-config
     restartPolicy: OnFailure
-    volumes:
-      - name: config
-        configMap:
-          name: detector-config
 ---
 apiVersion: apps/v1
 kind: Deployment
