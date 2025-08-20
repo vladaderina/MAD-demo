@@ -1,4 +1,4 @@
-# mad-trainer-config.yaml test
+# mad-trainer-config.yaml
 optuna_tuning:
   direction: "minimize"
   metric: "val_loss"
