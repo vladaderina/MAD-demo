@@ -12,9 +12,9 @@ mad_components:
       tag: "latest"
     service:
       type: NodePort
-      port: 30001
-      nodePort: 30001
-      targetPort: 30001
+      port: "30001"
+      nodePort: "30001"
+      targetPort: "30001"
 
   mad_scheduler:
     image:
@@ -22,8 +22,8 @@ mad_components:
       tag: "latest"
     service:
       type: ClusterIP
-      port: 30002
-      targetPort: 30002
+      port: "30002"
+      targetPort: "30002"
 
   mad_maintainer:
     image:
@@ -31,8 +31,8 @@ mad_components:
       tag: "latest"
     service:
       type: ClusterIP
-      port: 30003
-      targetPort: 30003
+      port: "30003"
+      targetPort: "30003"
 
   mad_trainer:
     image:
@@ -40,8 +40,8 @@ mad_components:
       tag: "latest"
     service:
       type: ClusterIP
-      port: 30004
-      targetPort: 30004
+      port: "30004"
+      targetPort: "30004"
 
   mad_detector:
     image:
@@ -49,8 +49,8 @@ mad_components:
       tag: "latest"
     service:
       type: ClusterIP
-      port: 30005
-      targetPort: 30005
+      port: "30005"
+      targetPort: "30005"
 
   mad_notifier:
     image:
@@ -58,8 +58,8 @@ mad_components:
       tag: "latest"
     service:
       type: ClusterIP
-      port: 30006
-      targetPort: 30006
+      port: "30006"
+      targetPort: "30006"
     debug: true
     bot_token: ""
     chat_id: ""
