@@ -3,12 +3,6 @@ set -e
 
 IMAGE_TAGS=$1
 
-echo "Setting up Docker Buildx"
-docker buildx create --use
-
-echo "Logging in to GitHub Container Registry"
-echo "${{ secrets.CICD_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
 echo "Building and pushing image with tags: $IMAGE_TAGS"
 
 IFS=',' read -ra TAGS <<< "$IMAGE_TAGS"

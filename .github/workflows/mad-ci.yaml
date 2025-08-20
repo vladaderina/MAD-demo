@@ -155,34 +155,44 @@ jobs:
   #       ./scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
 
   build-and-push:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    environment: prod
-    needs: [init, setup]
-    if: needs.setup.outputs.should_build == 'true'
-    permissions:
-      packages: write
-    
-    steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ needs.init.outputs.source_repo }}
-        ref: ${{ needs.init.outputs.source_sha }}
-        token: ${{ secrets.CICD_PAT }}
+      name: Build and Push Docker Image
+      runs-on: ubuntu-latest
+      environment: prod
+      needs: [init, setup]
+      if: needs.setup.outputs.should_build == 'true'
+      permissions:
+        contents: read
+      
+      steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ needs.init.outputs.source_repo }}
+          ref: ${{ needs.init.outputs.source_sha }}
+          token: ${{ secrets.CICD_PAT }}
 
-    - name: Checkout CI/CD templates
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ env.REGISTRY }}/MAD-demo
-        ref: main
-        path: ci-templates
-        token: ${{ secrets.CICD_PAT }}
+      - name: Checkout CI/CD templates
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REGISTRY }}/MAD-demo
+          ref: main
+          path: ci-templates
+          token: ${{ secrets.CICD_PAT }}
 
-    - name: Build and push image
-      run: |
-        chmod +x ./ci-templates/scripts/ci-cd/build-push.sh
-        ./ci-templates/scripts/ci-cd/build-push.sh "${{ needs.setup.outputs.image_tags }}"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push image
+        run: |
+          chmod +x ./ci-templates/scripts/ci-cd/build-push.sh
+          ./ci-templates/scripts/ci-cd/build-push.sh "${{ needs.setup.outputs.image_tags }}"
 
   notify:
     name: Notification
