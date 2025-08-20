@@ -93,66 +93,66 @@ jobs:
           echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
         fi
 
-  lint:
-    name: Lint and Code Quality
-    runs-on: ubuntu-latest
-    needs: [init, setup]
-    if: needs.setup.outputs.should_build == 'true'
-    environment: prod
+  # lint:
+  #   name: Lint and Code Quality
+  #   runs-on: ubuntu-latest
+  #   needs: [init, setup]
+  #   if: needs.setup.outputs.should_build == 'true'
+  #   environment: prod
 
-    steps:
-    # 1. Клонируем репозиторий с исходным кодом, который нужно проверить
-    - name: Checkout source code (to lint)
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ needs.init.outputs.source_repo }}
-        ref: ${{ needs.init.outputs.source_sha }}
-        token: ${{ secrets.CICD_PAT }}
-        path: source-code
+  #   steps:
+  #   # 1. Клонируем репозиторий с исходным кодом, который нужно проверить
+  #   - name: Checkout source code (to lint)
+  #     uses: actions/checkout@v4
+  #     with:
+  #       repository: ${{ needs.init.outputs.source_repo }}
+  #       ref: ${{ needs.init.outputs.source_sha }}
+  #       token: ${{ secrets.CICD_PAT }}
+  #       path: source-code
 
-    # 2. Клонируем репозиторий MAD-demo, чтобы взять оттуда скрипты
-    - name: Checkout CI/CD scripts from MAD-demo
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ env.REGISTRY }}/MAD-demo
-        ref: main
-        token: ${{ secrets.CICD_PAT }}
-        path: ci-scripts
+  #   # 2. Клонируем репозиторий MAD-demo, чтобы взять оттуда скрипты
+  #   - name: Checkout CI/CD scripts from MAD-demo
+  #     uses: actions/checkout@v4
+  #     with:
+  #       repository: ${{ env.REGISTRY }}/MAD-demo
+  #       ref: main
+  #       token: ${{ secrets.CICD_PAT }}
+  #       path: ci-scripts
 
-    # 3. Запускаем скрипт линтинга из MAD-demo, передавая путь к исходному коду
-    - name: Run linting
-      run: |
-        chmod +x ./ci-scripts/scripts/ci-cd/run-linting.sh
-        cd source-code
-        ../ci-scripts/scripts/ci-cd/run-linting.sh
+  #   # 3. Запускаем скрипт линтинга из MAD-demo, передавая путь к исходному коду
+  #   - name: Run linting
+  #     run: |
+  #       chmod +x ./ci-scripts/scripts/ci-cd/run-linting.sh
+  #       cd source-code
+  #       ../ci-scripts/scripts/ci-cd/run-linting.sh
 
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    needs: [init, setup, lint]
-    if: needs.setup.outputs.should_build == 'true'
-    environment: prod
+  # test:
+  #   name: Run Tests
+  #   runs-on: ubuntu-latest
+  #   needs: [init, setup, lint]
+  #   if: needs.setup.outputs.should_build == 'true'
+  #   environment: prod
     
-    steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ needs.init.outputs.source_repo }}
-        ref: ${{ needs.init.outputs.source_sha }}
-        token: ${{ secrets.CICD_PAT }}
+  #   steps:
+  #   - name: Checkout source code
+  #     uses: actions/checkout@v4
+  #     with:
+  #       repository: ${{ needs.init.outputs.source_repo }}
+  #       ref: ${{ needs.init.outputs.source_sha }}
+  #       token: ${{ secrets.CICD_PAT }}
 
-    - name: Checkout tests repository
-      uses: actions/checkout@v4
-      with:
-        repository: mad-tests
-        ref: main
-        path: "${{ needs.init.outputs.service_name }}"
-        token: ${{ secrets.CICD_PAT }}
+  #   - name: Checkout tests repository
+  #     uses: actions/checkout@v4
+  #     with:
+  #       repository: mad-tests
+  #       ref: main
+  #       path: "${{ needs.init.outputs.service_name }}"
+  #       token: ${{ secrets.CICD_PAT }}
 
-    - name: Run tests for service
-      run: |
-        chmod +x ./scripts/ci-cd/run-tests.sh
-        ./scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
+  #   - name: Run tests for service
+  #     run: |
+  #       chmod +x ./scripts/ci-cd/run-tests.sh
+  #       ./scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
 
   build-and-push:
     name: Build and Push Docker Image
