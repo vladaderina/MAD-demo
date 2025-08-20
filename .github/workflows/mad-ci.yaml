@@ -1,0 +1,213 @@
+name: MAD Services CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_repo:
+        description: 'Source repository'
+        required: true
+      source_ref:
+        description: 'Source reference'
+        required: true
+      source_sha:
+        description: 'Source commit SHA'
+        required: true
+      event_type:
+        description: 'Event type'
+        required: true
+      build_type:
+        description: 'Build type (tag/commit)'
+        required: true
+      service_name:
+        description: 'Service name'
+        required: true
+
+  repository_dispatch:
+    types: [ mad-service-trigger ]
+
+env:
+  REGISTRY: vladaderina
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  init:
+    name: Init Parameters
+    runs-on: ubuntu-latest
+    outputs:
+      source_repo: ${{ steps.set-params.outputs.source_repo }}
+      source_ref: ${{ steps.set-params.outputs.source_ref }}
+      source_sha: ${{ steps.set-params.outputs.source_sha }}
+      event_type: ${{ steps.set-params.outputs.event_type }}
+      build_type: ${{ steps.set-params.outputs.build_type }}
+      service_name: ${{ steps.set-params.outputs.service_name }}
+
+    steps:
+      - name: Extract parameters
+        id: set-params
+        run: |
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+            echo "source_repo=${{ github.event.client_payload.source_repo }}" >> $GITHUB_OUTPUT
+            echo "source_ref=${{ github.event.client_payload.source_ref }}" >> $GITHUB_OUTPUT
+            echo "source_sha=${{ github.event.client_payload.source_sha }}" >> $GITHUB_OUTPUT
+            echo "event_type=${{ github.event.client_payload.event_type }}" >> $GITHUB_OUTPUT
+            echo "build_type=${{ github.event.client_payload.build_type }}" >> $GITHUB_OUTPUT
+            echo "service_name=${{ github.event.client_payload.service_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "source_repo=${{ inputs.source_repo }}" >> $GITHUB_OUTPUT
+            echo "source_ref=${{ inputs.source_ref }}" >> $GITHUB_OUTPUT
+            echo "source_sha=${{ inputs.source_sha }}" >> $GITHUB_OUTPUT
+            echo "event_type=${{ inputs.event_type }}" >> $GITHUB_OUTPUT
+            echo "build_type=${{ inputs.build_type }}" >> $GITHUB_OUTPUT
+            echo "service_name=${{ inputs.service_name }}" >> $GITHUB_OUTPUT
+          fi
+
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    needs: init
+    outputs:
+      image_tags: ${{ steps.prepare-tags.outputs.image_tags }}
+      should_build: ${{ steps.validate-build.outputs.should_build }}
+    
+    steps:
+    - name: Validate inputs
+      id: validate-build
+      run: |
+        if [[ "${{ needs.init.outputs.build_type }}" == "none" ]]; then
+          echo "should_build=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        echo "should_build=true" >> $GITHUB_OUTPUT
+
+    - name: Prepare image tags
+      id: prepare-tags
+      if: steps.validate-build.outputs.should_build == 'true'
+      run: |
+        if [[ "${{ needs.init.outputs.build_type }}" == "tag" ]]; then
+          TAG_NAME="${{ needs.init.outputs.source_ref }}"
+          echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${TAG_NAME##refs/tags/},${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:latest" >> $GITHUB_OUTPUT
+        else
+          SHORT_SHA="${{ needs.init.outputs.source_sha::7 }}"
+          echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
+        fi
+
+  lint:
+    name: Lint and Code Quality
+    runs-on: ubuntu-latest
+    needs: [init, setup]
+    if: needs.setup.outputs.should_build == 'true'
+    
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+      environment: prod
+      with:
+        repository: ${{ needs.init.outputs.source_repo }}
+        ref: ${{ needs.init.outputs.source_sha }}
+        token: ${{ secrets.CICD_PAT }}
+
+    - name: Run linting
+      run: |
+        chmod +x ./scripts/run-linting.sh
+        ./scripts/run-linting.sh
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: [init, setup, lint]
+    if: needs.setup.outputs.should_build == 'true'
+    
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+      environment: prod
+      with:
+        repository: ${{ needs.init.outputs.source_repo }}
+        ref: ${{ needs.init.outputs.source_sha }}
+        token: ${{ secrets.CICD_PAT }}
+
+    - name: Checkout tests repository
+      uses: actions/checkout@v4
+      environment: prod
+      with:
+        repository: mad-tests
+        ref: main
+        path: "${{ needs.init.outputs.service_name }}"
+        token: ${{ secrets.CICD_PAT }}
+
+    - name: Run tests for service
+      run: |
+        chmod +x ./scripts/run-tests.sh
+        ./scripts/run-tests.sh "${{ needs.init.outputs.service_name }}"
+
+  # security-scan:
+  #   name: Security Scanning
+  #   runs-on: ubuntu-latest
+  #   needs: [init, setup, test]
+  #   if: needs.setup.outputs.should_build == 'true'
+    
+  #   steps:
+  #   - name: Checkout source code
+  #     uses: actions/checkout@v4
+  #     with:
+  #       repository: ${{ needs.init.outputs.source_repo }}
+  #       ref: ${{ needs.init.outputs.source_sha }}
+  #       token: ${{ secrets.CICD_PAT }}
+
+  #   - name: Run security scan
+  #     run: |
+  #       chmod +x ./scripts/security-scan.sh
+  #       ./scripts/security-scan.sh
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [init, setup, lint, test, security-scan]
+    if: needs.setup.outputs.should_build == 'true'
+    permissions:
+      packages: write
+    
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+      environment: prod
+      with:
+        repository: ${{ needs.init.outputs.source_repo }}
+        ref: ${{ needs.init.outputs.source_sha }}
+        token: ${{ secrets.CICD_PAT }}
+
+    - name: Checkout CI/CD templates
+      uses: actions/checkout@v4
+      environment: prod
+      with:
+        repository: MAD-demo/mad-ci-cd
+        ref: main
+        path: ci-templates
+        token: ${{ secrets.CICD_PAT }}
+
+    - name: Build and push image
+      run: |
+        chmod +x ./scripts/build-push.sh
+        ./scripts/build-push.sh "${{ needs.setup.outputs.image_tags }}"
+
+  notify:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [init, build-and-push]
+    if: always()
+    
+    steps:
+    - name: Send success notification
+      if: success()
+      run: |
+        echo "✅ CI/CD Pipeline completed successfully!"
+        echo "Service: ${{ needs.init.outputs.service_name }}"
+        echo "Image: ${{ needs.setup.outputs.image_tags }}"
+        echo "Build Type: ${{ needs.init.outputs.build_type }}"
+
+    - name: Send failure notification
+      if: failure()
+      run: |
+        echo "❌ CI/CD Pipeline failed!"
+        echo "Service: ${{ needs.init.outputs.service_name }}"
+        echo "Check the logs for details."

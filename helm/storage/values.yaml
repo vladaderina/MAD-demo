@@ -96,8 +96,8 @@ postgresql:
               id SERIAL PRIMARY KEY,
               model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
               metric_id INTEGER NOT NULL REFERENCES metrics(id) ON DELETE CASCADE,
-              timestamp TIMESTAMP WITH TIME ZONE NOT NULL
-              prediction_error_id INTEGER REFERENCES prediction_errors(id) ON DELETE SET NULL;
+              timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+              prediction_error_id INTEGER REFERENCES prediction_errors(id) ON DELETE SET NULL
           );
 
           -- 6. Таблица системных аномалий
