@@ -101,13 +101,6 @@ jobs:
     environment: prod
 
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ needs.init.outputs.source_repo }}
-        ref: ${{ needs.init.outputs.source_sha }}
-        token: ${{ secrets.CICD_PAT }}
-
     - name: Run linting
       run: |
         ls -la
