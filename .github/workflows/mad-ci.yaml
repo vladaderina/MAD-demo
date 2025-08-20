@@ -114,7 +114,7 @@ jobs:
     - name: Checkout CI/CD scripts from MAD-demo
       uses: actions/checkout@v4
       with:
-        repository: MAD-demo
+        repository: ${{ env.REGISTRY }}/MAD-demo/scripts/ci-cd
         ref: main
         token: ${{ secrets.CICD_PAT }}
         path: ci-scripts
@@ -122,9 +122,9 @@ jobs:
     # 3. Запускаем скрипт линтинга из MAD-demo, передавая путь к исходному коду
     - name: Run linting
       run: |
-        chmod +x ./ci-scripts/scripts/ci-cd/run-linting.sh
+        chmod +x ./ci-scripts/run-linting.sh
         cd source-code
-        ../ci-scripts/scripts/ci-cd/run-linting.sh
+        ../ci-scripts/run-linting.sh
 
   test:
     name: Run Tests
@@ -174,15 +174,15 @@ jobs:
     - name: Checkout CI/CD templates
       uses: actions/checkout@v4
       with:
-        repository: MAD-demo/mad-ci-cd
+        repository: ${{ env.REGISTRY }}/MAD-demo/scripts/ci-cd
         ref: main
         path: ci-templates
         token: ${{ secrets.CICD_PAT }}
 
     - name: Build and push image
       run: |
-        chmod +x ./scripts/ci-cd/build-push.sh
-        ./scripts/ci-cd/build-push.sh "${{ needs.setup.outputs.image_tags }}"
+        chmod +x ./ci-templates/build-push.sh
+        ./ci-templates/build-push.sh "${{ needs.setup.outputs.image_tags }}"
 
   notify:
     name: Notification
