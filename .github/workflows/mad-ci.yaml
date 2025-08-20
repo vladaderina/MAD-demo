@@ -114,10 +114,12 @@ jobs:
     - name: Checkout CI/CD scripts from MAD-demo
       uses: actions/checkout@v4
       with:
-        repository: ${{ env.REGISTRY }}/MAD-demo/scripts/ci-cd
+        repository: ${{ env.REGISTRY }}/MAD-demo
         ref: main
         token: ${{ secrets.CICD_PAT }}
         path: ci-scripts
+        sparse-checkout: scripts/ci-cd
+        fetch-depth: 1
 
     # 3. Запускаем скрипт линтинга из MAD-demo, передавая путь к исходному коду
     - name: Run linting
@@ -174,10 +176,12 @@ jobs:
     - name: Checkout CI/CD templates
       uses: actions/checkout@v4
       with:
-        repository: ${{ env.REGISTRY }}/MAD-demo/scripts/ci-cd
+        repository: ${{ env.REGISTRY }}/MAD-demo
         ref: main
         path: ci-templates
         token: ${{ secrets.CICD_PAT }}
+        sparse-checkout: scripts/ci-cd
+        fetch-depth: 1
 
     - name: Build and push image
       run: |
