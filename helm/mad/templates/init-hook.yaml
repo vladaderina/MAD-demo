@@ -25,7 +25,7 @@ spec:
             - name: LOG_PATH
               value: "{{ .Values.general.log_path }}"
             - name: CONFIG_PATH
-              value: "{{ .Values.general.config_path }}/general-config.yaml"
+              value: "{{ .Values.general.config_dir }}/general-config.yaml"
           volumeMounts:
             - mountPath: /app/config
               name: config
