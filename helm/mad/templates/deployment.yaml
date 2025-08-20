@@ -19,7 +19,7 @@ spec:
           image: "{{ .Values.mad_components.mad_api.image.repository }}:{{ .Values.mad_components.mad_api.image.tag }}"
           ports:
             - name: http
-              containerPort: {{ .Values.mad_components.mad_trainer.service.port }}
+              containerPort: {{ .Values.mad_components.mad_trainer.service.port | quote }}
           env:
             - name: DB_CONN_STRING
               valueFrom:
@@ -52,7 +52,7 @@ spec:
         image: "{{ .Values.mad_components.mad_trainer.image.repository }}:{{ .Values.mad_components.mad_trainer.image.tag }}"
         ports:
           - name: http
-            containerPort: {{ .Values.mad_components.mad_trainer.service.port }}
+            containerPort: {{ .Values.mad_components.mad_trainer.service.port | quote }}
         envFrom:
           - secretRef:
               name: {{ .Release.Name }}-db-secret
@@ -96,7 +96,7 @@ spec:
           image: "{{ .Values.mad_components.mad_detector.image.repository }}:{{ .Values.mad_components.mad_detector.image.tag }}"
           ports:
             - name: http
-              containerPort: {{ .Values.mad_components.mad_detector.service.port }}
+              containerPort: {{ .Values.mad_components.mad_detector.service.port | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-db-secret
@@ -114,7 +114,6 @@ spec:
         - name: config
           configMap:
             name: detector-config
-    restartPolicy: OnFailure
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -137,13 +136,13 @@ spec:
           image: "{{ .Values.mad_components.mad_notifier.image.repository }}:{{ .Values.mad_components.mad_notifier.image.tag }}"
           ports:
             - name: http
-              containerPort: {{ .Values.mad_components.mad_notifier.service.port }}
+              containerPort: {{ .Values.mad_components.mad_notifier.service.port | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-telegram-secrets
           env:
             - name: PORT
-              value: {{ .Values.mad_components.mad_notifier.service.port }}
+              value: {{ .Values.mad_components.mad_notifier.service.port | quote }}
             - name: DEBUG
               value: {{ .Values.mad_components.mad_notifier.debug }}
           livenessProbe:

@@ -10,11 +10,11 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: {{ $config.service.port | default $config.service.targetPort }}
-      targetPort: {{ $config.service.targetPort }}
+    - port: {{ $config.service.port | default $config.service.targetPort | quote }}
+      targetPort: {{ $config.service.targetPort | quote }}
       protocol: {{ $config.service.protocol | default "TCP" }}
       {{- if $config.service.nodePort }}
-      nodePort: {{ $config.service.nodePort }}
+      nodePort: {{ $config.service.nodePort | quote }}
       {{- end }}
   selector:
     app: {{ $name | replace "_" "-" }}
