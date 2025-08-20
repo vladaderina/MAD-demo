@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mad_api
+  name: mad-api
 spec:
   replicas: 1
   selector:
@@ -34,7 +34,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mad_trainer
+  name: mad-trainer
 spec:
   replicas: 1
   selector:
@@ -78,7 +78,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mad_detector
+  name: mad-detector
 spec:
   replicas: 1
   selector:
@@ -119,7 +119,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mad_notifier
+  name: mad-notifier
 spec:
   replicas: 1
   selector:
