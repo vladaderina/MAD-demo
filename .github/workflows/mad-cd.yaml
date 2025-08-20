@@ -2,16 +2,18 @@ name: Helm Deploy Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
     paths:
-      - 'MAD-demo/helm/mad/**'
+      - 'helm/mad/**'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
     paths:
-      - 'MAD-demo/helm/mad/**'
+      - 'helm/mad/**'
 
 env:
-  HELM_CHART_DIR: MAD-demo/helm/mad
+  HELM_CHART_DIR: helm/mad
   RELEASE_NAME: mad
   NAMESPACE: mad
 
