@@ -87,7 +87,9 @@ jobs:
           TAG_NAME="${{ needs.init.outputs.source_ref }}"
           echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${TAG_NAME##refs/tags/},${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:latest" >> $GITHUB_OUTPUT
         else
-          SHORT_SHA="${{ needs.init.outputs.source_sha::7 }}"
+          # Extract first 7 characters of SHA
+          SOURCE_SHA="${{ needs.init.outputs.source_sha }}"
+          SHORT_SHA="${SOURCE_SHA:0:7}"
           echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
         fi
 
