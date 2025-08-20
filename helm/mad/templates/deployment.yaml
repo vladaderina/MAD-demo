@@ -58,6 +58,8 @@ spec:
         envFrom:
           - secretRef:
               name: {{ .Release.Name }}-db-secret
+          - secretRef:
+              name: {{ .Release.Name }}-vm
         env:
           - name: GENERAL_CONFIG_PATH
             value: /app/config/general-config.yaml
@@ -65,8 +67,6 @@ spec:
             value: /app/config/trainer-config.yaml
           - name: LOG_PATH
             value: ./anomaly_detection.log
-          - name: VICTORIAMETRICS_URL
-            value: {{ .Values.general.victoriametrics_url | quote }}
           - name: DETECTOR_SERVICE_URL
             value: {{ include "serviceFQDN" (merge (dict "name" "mad_detector") .) }}
         volumeMounts:
@@ -103,9 +103,9 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-db-secret
+            - secretRef:
+                name: {{ .Release.Name }}-vm
           env:
-            - name: VICTORIAMETRICS_URL
-              value: {{ .Values.general.victoriametrics_url }}
             - name: NOTIFIER_SERVICE_URL
               value: {{ include "serviceFQDN" (merge (dict "name" "mad_notifier") .) }}
             - name: LOG_PATH
