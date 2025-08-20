@@ -110,6 +110,7 @@ jobs:
 
     - name: Run linting
       run: |
+        pwd
         chmod +x ./scripts/ci-cd/run-linting.sh
         ./scripts/ci-cd/run-linting.sh
 
