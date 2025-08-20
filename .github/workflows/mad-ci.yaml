@@ -101,11 +101,30 @@ jobs:
     environment: prod
 
     steps:
+    # 1. Клонируем репозиторий с исходным кодом, который нужно проверить
+    - name: Checkout source code (to lint)
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ needs.init.outputs.source_repo }}
+        ref: ${{ needs.init.outputs.source_sha }}
+        token: ${{ secrets.CICD_PAT }}
+        path: source-code
+
+    # 2. Клонируем репозиторий MAD-demo, чтобы взять оттуда скрипты
+    - name: Checkout CI/CD scripts from MAD-demo
+      uses: actions/checkout@v4
+      with:
+        repository: MAD-demo
+        ref: main
+        token: ${{ secrets.CICD_PAT }}
+        path: ci-scripts
+
+    # 3. Запускаем скрипт линтинга из MAD-demo, передавая путь к исходному коду
     - name: Run linting
       run: |
-        ls -la
-        chmod +x ./scripts/ci-cd/run-linting.sh
-        ./scripts/ci-cd/run-linting.sh
+        chmod +x ./ci-scripts/scripts/ci-cd/run-linting.sh
+        cd source-code
+        ../ci-scripts/scripts/ci-cd/run-linting.sh
 
   test:
     name: Run Tests
