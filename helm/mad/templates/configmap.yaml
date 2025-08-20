@@ -7,9 +7,9 @@ metadata:
     app: trainer
 data:
   general-config.yaml: |-
-    {{ .Files.Get "general-config.yaml" | nindent 4 }}
+    {{ .Files.Get "files/general-config.yaml" | nindent 4 }}
   trainer-config.yaml: |-
-    {{ .Files.Get "trainer-config.yaml" | nindent 4 }}
+    {{ .Files.Get "files/trainer-config.yaml" | nindent 4 }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -19,7 +19,7 @@ metadata:
     app: detector
 data:
   detector-сonfig.yaml: |-
-    {{ .Files.Get "detector-config.yaml" | nindent 4 }}
+    {{ .Files.Get "files/detector-config.yaml" | nindent 4 }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -32,4 +32,4 @@ metadata:
     "helm.sh/hook-weight": "1"
 data:
   general-config.yaml: |-
-    {{ .Files.Get "general-config.yaml" | nindent 4 }}
+    {{ .Files.Get "files/general-config.yaml" | nindent 4 }}
