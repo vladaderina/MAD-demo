@@ -144,7 +144,7 @@ spec:
             - name: PORT
               value: {{ .Values.mad_components.mad_notifier.service.port | quote }}
             - name: DEBUG
-              value: {{ .Values.mad_components.mad_notifier.debug }}
+              value: {{ .Values.mad_components.mad_notifier.debug | quote }}
           livenessProbe:
             httpGet:
               path: /health
