@@ -20,7 +20,6 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.mad_components.mad_trainer.service.port }}
-              protocol: {{ .Values.mad_components.mad_trainer.service.protocol }}
           env:
             - name: DB_CONN_STRING
               valueFrom:
@@ -54,7 +53,6 @@ spec:
         ports:
           - name: http
             containerPort: {{ .Values.mad_components.mad_trainer.service.port }}
-            protocol: {{ .Values.mad_components.mad_trainer.service.protocol }}
         envFrom:
           - secretRef:
               name: {{ .Release.Name }}-db-secret
@@ -99,7 +97,6 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.mad_components.mad_detector.service.port }}
-              protocol: {{ .Values.mad_components.mad_detector.service.protocol }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-db-secret
@@ -141,7 +138,6 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.mad_components.mad_notifier.service.port }}
-              protocol: {{ .Values.mad_components.mad_notifier.service.protocol }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-telegram-secrets

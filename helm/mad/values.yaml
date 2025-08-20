@@ -15,7 +15,6 @@ mad_components:
       port: 30001
       nodePort: 30001
       targetPort: 30001
-      protocol: HTTP
 
   mad_scheduler:
     image:
@@ -25,7 +24,6 @@ mad_components:
       type: ClusterIP
       port: 30002
       targetPort: 30002
-      protocol: HTTP
 
   mad_maintainer:
     image:
@@ -35,7 +33,6 @@ mad_components:
       type: ClusterIP
       port: 30003
       targetPort: 30003
-      protocol: HTTP
 
   mad_trainer:
     image:
@@ -45,7 +42,6 @@ mad_components:
       type: ClusterIP
       port: 30004
       targetPort: 30004
-      protocol: HTTP
 
   mad_detector:
     image:
@@ -55,7 +51,6 @@ mad_components:
       type: ClusterIP
       port: 30005
       targetPort: 30005
-      protocol: HTTP
 
   mad_notifier:
     image:
@@ -65,7 +60,6 @@ mad_components:
       type: ClusterIP
       port: 30006
       targetPort: 30006
-      protocol: HTTP
     debug: true
     bot_token: ""
     chat_id: ""
