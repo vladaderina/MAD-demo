@@ -118,15 +118,13 @@ jobs:
         ref: main
         token: ${{ secrets.CICD_PAT }}
         path: ci-scripts
-        sparse-checkout: scripts/ci-cd
-        fetch-depth: 1
 
     # 3. Запускаем скрипт линтинга из MAD-demo, передавая путь к исходному коду
     - name: Run linting
       run: |
-        chmod +x ./ci-scripts/run-linting.sh
+        chmod +x ./ci-scripts/scripts/ci-cd/run-linting.sh
         cd source-code
-        ../ci-scripts/run-linting.sh
+        ../ci-scripts/scripts/ci-cd/run-linting.sh
 
   test:
     name: Run Tests
@@ -180,13 +178,11 @@ jobs:
         ref: main
         path: ci-templates
         token: ${{ secrets.CICD_PAT }}
-        sparse-checkout: scripts/ci-cd
-        fetch-depth: 1
 
     - name: Build and push image
       run: |
-        chmod +x ./ci-templates/build-push.sh
-        ./ci-templates/build-push.sh "${{ needs.setup.outputs.image_tags }}"
+        chmod +x ./ci-templates/scripts/ci-cd/build-push.sh
+        ./ci-templates/scripts/ci-cd/build-push.sh "${{ needs.setup.outputs.image_tags }}"
 
   notify:
     name: Notification
