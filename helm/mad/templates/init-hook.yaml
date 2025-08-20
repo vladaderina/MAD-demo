@@ -16,7 +16,8 @@ spec:
         - name: initializer
           image: "{{ .Values.mad_components.mad_maintainer.image.repository }}:{{ .Values.mad_components.mad_maintainer.image.tag }}"
           imagePullPolicy: {{ .Values.general.pullPolicy | default "IfNotPresent" }}
-          command: ["init"]
+          command: ["python", "main.py"]
+          args: ["init"]
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-db-secret
