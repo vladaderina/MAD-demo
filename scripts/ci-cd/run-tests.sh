@@ -33,7 +33,7 @@ python -m pytest \
     --cov-report=html:test-results/coverage-html \
     -v \
     test-suites/mad-notifier/ \
-    "$SERVICE_NAME/tests/" \
+    "$SERVICE_NAME/" \
     || echo "Pytest completed with exit code: $?"
 
 echo "✅ Test execution completed"
