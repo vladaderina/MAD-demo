@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Устанавливаем дополнительные зависимости для тестов
 pip install freezegun  # Добавляем недостающую зависимость
 
-if [[ -f "$SERVICE_NAME/requirements-test.txt" ]]; then
+if [[ -f "test-suites/$SERVICE_NAME/requirements-test.txt" ]]; then
     pip install -r "$SERVICE_NAME/requirements-test.txt"
 fi
 
@@ -32,8 +32,7 @@ python -m pytest \
     --cov-report=xml:test-results/coverage.xml \
     --cov-report=html:test-results/coverage-html \
     -v \
-    test-suites/mad-notifier/ \
-    "$SERVICE_NAME/" \
+    test-suites/$SERVICE_NAME/ 
     || echo "Pytest completed with exit code: $?"
 
 echo "✅ Test execution completed"
