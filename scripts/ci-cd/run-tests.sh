@@ -12,11 +12,10 @@ mkdir -p test-results
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Устанавливаем дополнительные зависимости для тестов
-pip install freezegun  # Добавляем недостающую зависимость
+pip install freezegun
 
 if [[ -f "test-suites/$SERVICE_NAME/requirements-test.txt" ]]; then
-    pip install -r "$SERVICE_NAME/requirements-test.txt"
+    pip install -r "test-suites/$SERVICE_NAME/requirements-test.txt"
 fi
 
 pip install pytest pytest-cov pytest-asyncio
