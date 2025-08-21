@@ -14,7 +14,7 @@ done
 docker buildx build \
     --platform linux/amd64 \
     $TAG_ARGS \
-    --push
+    --push \
     .
 
 echo "Image pushed successfully"
