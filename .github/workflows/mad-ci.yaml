@@ -166,7 +166,7 @@ jobs:
     runs-on: self-hosted
     needs: [init, setup, lint]
     if: ${{ needs.setup.result == 'success' && needs.setup.outputs.should_build == 'true' }}
-    environment: production
+    environment: prod
     
     steps:
       - name: Checkout source code
@@ -184,7 +184,7 @@ jobs:
           path: test-suites
           token: ${{ secrets.CICD_PAT }}
 
-      - name: Checkout tests repository
+      - name: Checkout ci-cd repository
         uses: actions/checkout@v4
         with:
           repository: vladaderina/MAD-demo
