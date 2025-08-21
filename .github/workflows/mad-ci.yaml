@@ -185,13 +185,13 @@ jobs:
       with:
         repository: vladaderina/mad-tests
         ref: main
-        path: "${{ needs.init.outputs.service_name }}"
+        path: tests
         token: ${{ secrets.CICD_PAT }}
 
     - name: Run tests for service
       run: |
-        chmod +x ./"${{ needs.init.outputs.service_name }}"/scripts/ci-cd/run-tests.sh
-        ./"${{ needs.init.outputs.service_name }}"/scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
+        chmod +x ./tests/scripts/ci-cd/run-tests.sh
+        ./tests/scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
 
   build-and-push:
       name: Build and Push Docker Image
