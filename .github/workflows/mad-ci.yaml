@@ -197,7 +197,7 @@ jobs:
       name: Build and Push Docker Image
       runs-on: ubuntu-latest
       environment: prod
-      needs: [init, setup]
+      needs: [init, setup, lint, test]
       if: needs.setup.outputs.should_build == 'true'
       permissions:
         contents: read
