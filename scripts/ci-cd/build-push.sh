@@ -12,11 +12,9 @@ for tag in "${TAGS[@]}"; do
 done
 
 docker buildx build \
-    --platform linux/amd64,linux/arm64 \
+    --platform linux/amd64 \
     $TAG_ARGS \
-    --push \
-    --cache-from type=gha \
-    --cache-to type=gha,mode=max \
+    --push
     .
 
 echo "Image pushed successfully"
