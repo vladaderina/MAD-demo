@@ -31,7 +31,6 @@ python -m pytest \
     --cov-report=xml:test-results/coverage.xml \
     --cov-report=html:test-results/coverage-html \
     -v \
-    test-suites/$SERVICE_NAME/ 
-    || echo "Pytest completed with exit code: $?"
+    test-suites/$SERVICE_NAME/
 
 echo "✅ Test execution completed"
