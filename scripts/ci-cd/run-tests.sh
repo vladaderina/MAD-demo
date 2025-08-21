@@ -36,6 +36,6 @@ python -m pytest \
     --cov-report=xml:test-results/coverage.xml \
     --cov-report=html:test-results/coverage-html \
     -v \
-    tests/ test_*.py *test*.py
+    test-suites/$SERVICE_NAME test_*.py *test*.py
 
 echo "✅ Tests completed successfully"
