@@ -183,7 +183,7 @@ jobs:
     - name: Checkout tests repository
       uses: actions/checkout@v4
       with:
-        repository: mad-tests
+        repository: vladaderina/mad-tests
         ref: main
         path: "${{ needs.init.outputs.service_name }}"
         token: ${{ secrets.CICD_PAT }}
@@ -213,7 +213,7 @@ jobs:
       - name: Checkout CI/CD templates
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.REGISTRY }}/MAD-demo
+          repository: vladaderina/MAD-demo
           ref: main
           path: ci-templates
           token: ${{ secrets.CICD_PAT }}
