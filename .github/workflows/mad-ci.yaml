@@ -70,28 +70,28 @@ jobs:
       should_build: ${{ steps.validate-build.outputs.should_build }}
     
     steps:
-    - name: Validate inputs
-      id: validate-build
-      run: |
-        if [[ "${{ needs.init.outputs.build_type }}" == "none" ]]; then
-          echo "should_build=false" >> $GITHUB_OUTPUT
-          exit 0
-        fi
-        echo "should_build=true" >> $GITHUB_OUTPUT
+      - name: Validate inputs
+        id: validate-build
+        run: |
+          if [[ "${{ needs.init.outputs.build_type }}" == "none" ]]; then
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "should_build=true" >> $GITHUB_OUTPUT
 
-    - name: Prepare image tags
-      id: prepare-tags
-      if: steps.validate-build.outputs.should_build == 'true'
-      run: |
-        if [[ "${{ needs.init.outputs.build_type }}" == "tag" ]]; then
-          TAG_NAME="${{ needs.init.outputs.source_ref }}"
-          echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${TAG_NAME##refs/tags/},${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:latest" >> $GITHUB_OUTPUT
-        else
-          # Extract first 7 characters of SHA
-          SOURCE_SHA="${{ needs.init.outputs.source_sha }}"
-          SHORT_SHA="${SOURCE_SHA:0:7}"
-          echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
-        fi
+      - name: Prepare image tags
+        id: prepare-tags
+        if: steps.validate-build.outputs.should_build == 'true'
+        run: |
+          if [[ "${{ needs.init.outputs.build_type }}" == "tag" ]]; then
+            TAG_NAME="${{ needs.init.outputs.source_ref }}"
+            echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${TAG_NAME##refs/tags/},${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:latest" >> $GITHUB_OUTPUT
+          else
+            # Extract first 7 characters of SHA
+            SOURCE_SHA="${{ needs.init.outputs.source_sha }}"
+            SHORT_SHA="${SOURCE_SHA:0:7}"
+            echo "image_tags=${{ env.REGISTRY }}/${{ needs.init.outputs.service_name }}:${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
 
   lint:
       name: Lint and Code Quality
@@ -101,108 +101,132 @@ jobs:
       environment: prod
 
       steps:
-      # 1. Клонируем репозиторий с исходным кодом, который нужно проверить
-      - name: Checkout source code (to lint)
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ needs.init.outputs.source_repo }}
-          ref: ${{ needs.init.outputs.source_sha }}
-          token: ${{ secrets.CICD_PAT }}
-          path: source-code
+        - name: Checkout source code (to lint)
+          uses: actions/checkout@v4
+          with:
+            repository: ${{ needs.init.outputs.source_repo }}
+            ref: ${{ needs.init.outputs.source_sha }}
+            token: ${{ secrets.CICD_PAT }}
+            path: source-code
 
-      # 2. Устанавливаем и запускаем линтинг напрямую
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      
-      - name: Install linting tools
-        run: |
-          pip install black isort
-      
-      - name: Run linting checks
-        id: linting
-        run: |
-          cd source-code
-          
-          # Запускаем black и сохраняем результат
-          echo "Running Black check..."
-          if black --check --diff .; then
-            echo "black_passed=true" >> $GITHUB_OUTPUT
-          else
-            echo "black_passed=false" >> $GITHUB_OUTPUT
-            echo "Black check failed!"
-          fi
-          
-          # Запускаем isort и сохраняем результат
-          echo "Running isort check..."
-          if isort --check-only --diff .; then
-            echo "isort_passed=true" >> $GITHUB_OUTPUT
-          else
-            echo "isort_passed=false" >> $GITHUB_OUTPUT
-            echo "isort check failed!"
-          fi
-      
-      # 3. Проверяем результаты линтинга и завершаем с ошибкой если нужно
-      - name: Check linting results
-        if: steps.linting.outputs.black_passed != 'true' || steps.linting.outputs.isort_passed != 'true'
-        run: |
-          echo "❌ Linting failed!"
-          echo "Please run the following commands to fix formatting issues:"
-          echo ""
-          echo "Black formatting:"
-          echo "black ."
-          echo ""
-          echo "isort formatting:"
-          echo "isort ."
-          echo ""
-          echo "After fixing, commit the changes and push again."
-          exit 1
+        - name: Setup Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.x'
+        
+        - name: Install linting tools
+          run: |
+            pip install black isort
+        
+        - name: Run linting checks
+          id: linting
+          run: |
+            cd source-code
+            
+            # Запускаем black и сохраняем результат
+            echo "Running Black check..."
+            if black --check --diff .; then
+              echo "black_passed=true" >> $GITHUB_OUTPUT
+            else
+              echo "black_passed=false" >> $GITHUB_OUTPUT
+              echo "Black check failed!"
+            fi
+            
+            # Запускаем isort и сохраняем результат
+            echo "Running isort check..."
+            if isort --check-only --diff .; then
+              echo "isort_passed=true" >> $GITHUB_OUTPUT
+            else
+              echo "isort_passed=false" >> $GITHUB_OUTPUT
+              echo "isort check failed!"
+            fi
+        
+        - name: Check linting results
+          if: steps.linting.outputs.black_passed != 'true' || steps.linting.outputs.isort_passed != 'true'
+          run: |
+            echo "Linting failed!"
+            echo "Please run the following commands to fix formatting issues:"
+            echo ""
+            echo "Black formatting:"
+            echo "black ."
+            echo ""
+            echo "isort formatting:"
+            echo "isort ."
+            echo ""
+            echo "After fixing, commit the changes and push again."
+            exit 1
 
-      # 4. Успешное завершение если все проверки пройдены
-      - name: Linting passed
-        if: steps.linting.outputs.black_passed == 'true' && steps.linting.outputs.isort_passed == 'true'
-        run: |
-          echo "✅ All linting checks passed!"
+        - name: Linting passed
+          if: steps.linting.outputs.black_passed == 'true' && steps.linting.outputs.isort_passed == 'true'
+          run: |
+            echo "All linting checks passed!"
 
   test:
     name: Run Tests
     runs-on: self-hosted
     needs: [init, setup, lint]
-    if: needs.setup.outputs.should_build == 'true'
-    environment: prod
+    if: ${{ needs.setup.result == 'success' && needs.setup.outputs.should_build == 'true' }}
+    environment: production
     
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ needs.init.outputs.source_repo }}
-        ref: ${{ needs.init.outputs.source_sha }}
-        token: ${{ secrets.CICD_PAT }}
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ needs.init.outputs.source_repo }}
+          ref: ${{ needs.init.outputs.source_sha }}
+          token: ${{ secrets.CICD_PAT }}
 
-    - name: Checkout tests repository
-      uses: actions/checkout@v4
-      with:
-        repository: vladaderina/mad-tests
-        ref: main
-        path: tests
-        token: ${{ secrets.CICD_PAT }}
+      - name: Checkout tests repository
+        uses: actions/checkout@v4
+        with:
+          repository: vladaderina/mad-tests
+          ref: main
+          path: test-suites
+          token: ${{ secrets.CICD_PAT }}
 
-    - name: Run tests for service
-      run: |
-        chmod +x ./tests/scripts/ci-cd/run-tests.sh
-        ./tests/scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
+      - name: Checkout tests repository
+        uses: actions/checkout@v4
+        with:
+          repository: vladaderina/MAD-demo
+          ref: main
+          path: demo
+          token: ${{ secrets.CICD_PAT }}
+
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Run tests
+        run: |
+          chmod +x ./demo/scripts/ci-cd/run-tests.sh
+          ./demo/scripts/ci-cd/run-tests.sh "${{ needs.init.outputs.service_name }}"
+        
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-${{ needs.init.outputs.service_name }}
+          path: |
+            test-results/
+            coverage.xml
+
+      - name: Publish test results
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: 'test-results/junit.xml'
 
   build-and-push:
-      name: Build and Push Docker Image
-      runs-on: self-hosted
-      environment: prod
-      needs: [init, setup, lint, test]
-      if: needs.setup.outputs.should_build == 'true'
-      permissions:
-        contents: read
-      
-      steps:
+    name: Build and Push Docker Image
+    runs-on: self-hosted
+    environment: prod
+    needs: [init, setup, lint, test]
+    if: needs.setup.outputs.should_build == 'true'
+    permissions:
+      contents: read
+    
+    steps:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
@@ -239,17 +263,17 @@ jobs:
     if: always()
     
     steps:
-    - name: Send success notification
-      if: success()
-      run: |
-        echo "✅ CI/CD Pipeline completed successfully!"
-        echo "Service: ${{ needs.init.outputs.service_name }}"
-        echo "Image: ${{ needs.setup.outputs.image_tags }}"
-        echo "Build Type: ${{ needs.init.outputs.build_type }}"
+      - name: Send success notification
+        if: success()
+        run: |
+          echo "✅ CI/CD Pipeline completed successfully!"
+          echo "Service: ${{ needs.init.outputs.service_name }}"
+          echo "Image: ${{ needs.setup.outputs.image_tags }}"
+          echo "Build Type: ${{ needs.init.outputs.build_type }}"
 
-    - name: Send failure notification
-      if: failure()
-      run: |
-        echo "❌ CI/CD Pipeline failed!"
-        echo "Service: ${{ needs.init.outputs.service_name }}"
-        echo "Check the logs for details."
+      - name: Send failure notification
+        if: failure()
+        run: |
+          echo "❌ CI/CD Pipeline failed!"
+          echo "Service: ${{ needs.init.outputs.service_name }}"
+          echo "Check the logs for details."
