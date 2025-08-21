@@ -32,7 +32,7 @@ env:
 jobs:
   init:
     name: Init Parameters
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       source_repo: ${{ steps.set-params.outputs.source_repo }}
       source_ref: ${{ steps.set-params.outputs.source_ref }}
@@ -63,7 +63,7 @@ jobs:
 
   setup:
     name: Setup Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: init
     outputs:
       image_tags: ${{ steps.prepare-tags.outputs.image_tags }}
@@ -95,7 +95,7 @@ jobs:
 
   lint:
       name: Lint and Code Quality
-      runs-on: ubuntu-latest
+      runs-on: self-hosted
       needs: [init, setup]
       if: needs.setup.outputs.should_build == 'true'
       environment: prod
@@ -167,7 +167,7 @@ jobs:
 
   test:
     name: Run Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [init, setup, lint]
     if: needs.setup.outputs.should_build == 'true'
     environment: prod
@@ -195,7 +195,7 @@ jobs:
 
   build-and-push:
       name: Build and Push Docker Image
-      runs-on: ubuntu-latest
+      runs-on: self-hosted
       environment: prod
       needs: [init, setup, lint, test]
       if: needs.setup.outputs.should_build == 'true'
@@ -234,7 +234,7 @@ jobs:
 
   notify:
     name: Notification
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [init, build-and-push]
     if: always()
     
