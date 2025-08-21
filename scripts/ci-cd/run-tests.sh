@@ -12,11 +12,10 @@ mkdir -p test-results
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Устанавливаем дополнительные зависимости для тестов
-pip install freezegun  # Добавляем недостающую зависимость
+pip install freezegun
 
-if [[ -f "$SERVICE_NAME/requirements-test.txt" ]]; then
-    pip install -r "$SERVICE_NAME/requirements-test.txt"
+if [[ -f "test-suites/$SERVICE_NAME/requirements-test.txt" ]]; then
+    pip install -r "test-suites/$SERVICE_NAME/requirements-test.txt"
 fi
 
 pip install pytest pytest-cov pytest-asyncio
@@ -32,8 +31,6 @@ python -m pytest \
     --cov-report=xml:test-results/coverage.xml \
     --cov-report=html:test-results/coverage-html \
     -v \
-    test-suites/mad-notifier/ \
-    "$SERVICE_NAME/" \
-    || echo "Pytest completed with exit code: $?"
+    test-suites/$SERVICE_NAME/
 
 echo "✅ Test execution completed"
