@@ -1,0 +1,129 @@
+---
+- name: Create Loki user
+  user:
+    name: loki
+    system: yes
+    shell: /bin/false
+    home: /var/lib/loki
+    create_home: yes
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: loki
+    group: loki
+    mode: '0755'
+  loop:
+    - /etc/loki
+    - /var/lib/loki
+    - /etc/promtail
+
+- name: Download Loki
+  get_url:
+    url: "{{ loki_download_url }}"
+    dest: /tmp/loki.zip
+
+- name: Download Promtail
+  get_url:
+    url: "{{ promtail_download_url }}"
+    dest: /tmp/promtail.zip
+
+- name: Extract Loki
+  unarchive:
+    src: /tmp/loki.zip
+    dest: /usr/local/bin/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Extract Promtail
+  unarchive:
+    src: /tmp/promtail.zip
+    dest: /usr/local/bin/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Loki configuration
+  template:
+    src: loki.yaml.j2
+    dest: /etc/loki/loki.yaml
+    owner: loki
+    group: loki
+    mode: '0644'
+
+- name: Create Promtail configuration
+  template:
+    src: promtail.yaml.j2
+    dest: /etc/promtail/promtail.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create Loki systemd service
+  copy:
+    content: |
+      [Unit]
+      Description=Loki
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=loki
+      Group=loki
+      ExecStart=/usr/local/bin/loki-linux-amd64 -config.file=/etc/loki/loki.yaml
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/loki.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create Promtail systemd service
+  copy:
+    content: |
+      [Unit]
+      Description=Promtail
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=root
+      Group=root
+      ExecStart=/usr/local/bin/promtail-linux-amd64 -config.file=/etc/promtail/promtail.yaml
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/promtail.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Start and enable Loki services
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - loki
+    - promtail
+
+- name: Clean up temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/loki.zip
+    - /tmp/promtail.zip

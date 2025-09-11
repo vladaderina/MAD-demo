@@ -1,0 +1,53 @@
+---
+- name: Create VictoriaMetrics user
+  user:
+    name: victoriametrics
+    system: yes
+    shell: /bin/false
+    home: "{{ victoriametrics_data_dir }}"
+    create_home: yes
+
+- name: Download VictoriaMetrics
+  get_url:
+    url: "{{ victoriametrics_download_url }}"
+    dest: /tmp/victoriametrics.tar.gz
+
+- name: Extract VictoriaMetrics
+  unarchive:
+    src: /tmp/victoriametrics.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create data directory
+  file:
+    path: "{{ victoriametrics_data_dir }}"
+    state: directory
+    owner: victoriametrics
+    group: victoriametrics
+    mode: '0755'
+
+- name: Create systemd service
+  template:
+    src: victoriametrics.service.j2
+    dest: /etc/systemd/system/victoriametrics.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Start and enable VictoriaMetrics
+  systemd:
+    name: victoriametrics
+    state: started
+    enabled: yes
+
+- name: Clean up temporary files
+  file:
+    path: /tmp/victoriametrics.tar.gz
+    state: absent

@@ -1,0 +1,54 @@
+---
+- name: Download Grafana
+  get_url:
+    url: "{{ grafana_download_url }}"
+    dest: /tmp/grafana.deb
+
+- name: Install Grafana
+  apt:
+    deb: /tmp/grafana.deb
+
+- name: Create datasources configuration
+  template:
+    src: datasources.yaml.j2
+    dest: /etc/grafana/provisioning/datasources/datasources.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create dashboard configuration
+  copy:
+    src: dashboard-postgres.yaml.j2
+    dest: /etc/grafana/provisioning/dashboards/dashboards.yaml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Start and enable Grafana
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Wait for Grafana to start
+  wait_for:
+    port: "{{ grafana_port }}"
+    delay: 5
+    timeout: 60
+
+- name: Set admin password
+  uri:
+    url: "http://localhost:{{ grafana_port }}/api/admin/users/1/password"
+    method: PUT
+    user: "{{ grafana_admin_user }}"
+    password: "{{ grafana_admin_password }}"
+    body_format: json
+    body:
+      password: "{{ grafana_admin_password }}"
+    status_code: 200
+    force_basic_auth: yes
+
+- name: Clean up temporary files
+  file:
+    path: /tmp/grafana.deb
+    state: absent

@@ -1,0 +1,65 @@
+---
+- name: Update package cache
+  become: yes
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  become: yes
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+
+- name: Install security updates automatically
+  become: yes
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Configure automatic updates
+  become: yes
+  copy:
+    src: files/20auto-upgrades
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+
+- name: Configure sysctl settings
+  become: yes
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop: "{{ sysctl_settings | dict2items }}"
+
+- name: Disable unnecessary services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - avahi-daemon
+    - cups
+    - isc-dhcp-server
+    - isc-dhcp-server6
+    - slapd
+    - nfs-kernel-server
+    - bind9
+    - vsftpd
+    - telnetd
+  ignore_errors: yes
+
+- name: Remove unnecessary packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+    purge: yes
+  loop:
+    - telnet
+    - ftp
+    - rsh-client
+    - rsh-server
+    - talk
+    - finger
+  ignore_errors: yes

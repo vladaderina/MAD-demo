@@ -1,0 +1,102 @@
+- name: Configure network and firewall
+  hosts: spaceweb
+  vars_files:
+    - group_vars/all.yml
+  roles:
+    # - role: base_hardening
+    #   tags: base_hardening
+    # - role: firewall
+    #   tags: firewall
+    - role: ssh_hardening
+      tags: ssh_hardening
+
+- name: Install and configure monitoring stack
+  hosts: spaceweb
+  vars_files:
+    - group_vars/all.yml
+  roles:
+    - role: postgresql
+      tags: postgresql
+    - role: victoriametrics
+      tags: victoriametrics
+    - role: loki
+      tags: loki
+    - role: grafana
+      tags: grafana
+
+  tasks:
+    - name: Show access information
+      debug:
+        msg:
+          - "PostgreSQL: localhost:{{ postgres_port | default(5432) }}"
+          - "VictoriaMetrics: http://{{ ansible_host }}:{{ victoria_metrics_port | default(8428) }}"
+          - "Loki: http://{{ ansible_host }}:{{ loki_port | default(3100) }}"
+          - "Grafana: http://{{ ansible_host }}:{{ grafana_port | default(3000) }} (доступ с: {{ admin_ips | default([]) | join(', ') }})"
+          - "SSH: {{ ansible_host }}:{{ ssh_port | default(22) }} (доступ с: {{ admin_ips | default([]) | join(', ') }})"
+
+- name: Verify security configuration
+  hosts: spaceweb
+  tasks:
+    - name: Check listening ports
+      command: ss -tuln
+      register: listening_ports
+      changed_when: false
+
+    - name: Display listening ports
+      debug:
+        msg: "{{ listening_ports.stdout_lines }}"
+
+    - name: Show current firewall rules
+      command: ufw status verbose
+      register: ufw_status
+      changed_when: false
+      when: ansible_os_family == "Debian"
+
+    - name: Display firewall status
+      debug:
+        msg: "{{ ufw_status.stdout_lines }}"
+      when: ansible_os_family == "Debian"
+
+    - name: Show iptables rules (fallback)
+      command: iptables -L -n -v
+      register: iptables_output
+      changed_when: false
+      when: ansible_os_family != "Debian"
+
+    - name: Display iptables rules
+      debug:
+        msg: "{{ iptables_output.stdout_lines }}"
+      when: ansible_os_family != "Debian"
+
+    - name: Security validation - check for unexpected listening addresses
+      fail:
+        msg: "Service listening on 0.0.0.0: {{ item }}"
+      when: "'0.0.0.0' in item and ':22' not in item and ':{{ victoria_metrics_port | default(8428) }}' not in item and enable_external_victoria_metrics | default(false)"
+      loop: "{{ listening_ports.stdout_lines }}"
+
+    - name: Verify SSH configuration
+      command: sshd -T
+      register: sshd_config
+      changed_when: false
+
+    - name: Check SSH password authentication is disabled
+      fail:
+        msg: "Password authentication is enabled in SSH"
+      when: "'passwordauthentication yes' in sshd_config.stdout"
+
+- name: Final security report
+  hosts: spaceweb
+  tasks:
+    - name: Generate security report
+      debug:
+        msg:
+          - "=== SECURITY CONFIGURATION REPORT ==="
+          - "Firewall: {{ 'ENABLED' if firewall_enabled | default(true) else 'DISABLED' }}"
+          - "SSH Key Only: {{ ssh_key_only | default(true) }}"
+          - "SSH Port: {{ ssh_port | default(22) }}"
+          - "Admin IPs: {{ admin_ips | default([]) | join(', ') }}"
+          - "VictoriaMetrics external access: {{ 'ENABLED' if enable_external_victoria_metrics | default(false) else 'DISABLED' }}"
+          - "External VictoriaMetrics IP: {{ victoria_metrics_allowed_ips | default('NONE') }}"
+          - "2FA Enabled: {{ enable_2fa | default(false) }}"
+          - "Fail2ban: {{ enable_fail2ban | default(true) }}"
+          - "====================================="

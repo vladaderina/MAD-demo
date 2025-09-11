@@ -1,0 +1,33 @@
+# PostgreSQL Configuration File
+# =============================
+
+listen_addresses = '{{ postgresql_listen_addresses }}'
+port = {{ postgresql_port }}
+max_connections = 100
+
+# Memory Configuration
+shared_buffers = 128MB
+work_mem = 4MB
+
+# Write-Ahead Log
+wal_level = replica
+fsync = on
+
+# Query Planning
+random_page_cost = 4.0
+effective_cache_size = 4GB
+
+# Logging
+log_destination = 'stderr'
+logging_collector = on
+log_directory = 'pg_log'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_rotation_size = 10MB
+log_min_duration_statement = 1000
+
+# Monitoring
+shared_preload_libraries = 'pg_stat_statements'
+pg_stat_statements.track = all
+pg_stat_statements.max = 10000
+track_activity_query_size = 2048

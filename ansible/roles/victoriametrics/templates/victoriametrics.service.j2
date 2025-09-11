@@ -1,0 +1,17 @@
+[Unit]
+Description=VictoriaMetrics
+After=network.target
+
+[Service]
+Type=simple
+User=victoriametrics
+Group=victoriametrics
+ExecStart=/usr/local/bin/victoria-metrics-prod \
+    -httpListenAddr=:{{ victoriametrics_port }} \
+    -storageDataPath={{ victoriametrics_data_dir }} \
+    -retentionPeriod=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: VictoriaMetrics
+    type: prometheus
+    access: proxy
+    url: http://localhost:{{ victoriametrics_port }}
+    isDefault: true
+    editable: true
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:{{ loki_port }}
+    editable: true

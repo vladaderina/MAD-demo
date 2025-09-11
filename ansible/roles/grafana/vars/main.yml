@@ -1,0 +1,1 @@
+grafana_download_url: "https://dl.grafana.com/oss/release/grafana_{{ grafana_version }}_amd64.deb"
