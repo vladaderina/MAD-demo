@@ -1,0 +1,51 @@
+[DEFAULT]
+# Лог-файл fail2ban
+logtarget = /var/log/fail2ban.log
+# Максимальное количество неудачных попыток до блокировки
+maxretry = 5
+# Время блокировки в секундах (1 час)
+bantime = 3600
+# Время, в течение которого считаются неудачные попытки (10 минут)
+findtime = 600
+# Использовать systemd для управления сервисами
+backend = systemd
+# Отправлять уведомления на email (опционально)
+destemail = root@localhost
+sender = fail2ban@localhost
+mta = sendmail
+action = %(action_mwl)s
+
+# Игнорировать IP (например, свой)
+ignoreip = 127.0.0.1/8 ::1 78.29.33.110
+
+# Лог для sshd
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 5
+bantime = 3600
+findtime = 600
+failregex = ^%(__prefix_line)s(?:error: PAM: )?Authentication failure for .* from <HOST>\s*$
+            ^%(__prefix_line)sFailed Google Authenticator for .* from <HOST>\s*$
+action = %(action_mwl)s
+
+[ssh-iptables]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 10
+bantime = 86400
+findtime = 3600
+
+[sshd-local]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+ignoreip = 192.168.0.0/16 10.0.0.0/8
+maxretry = 3
+bantime = 86400
+findtime = 3600

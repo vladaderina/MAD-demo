@@ -18,35 +18,51 @@ theme:
     annotation: material/arrow-right-circle
 
 nav:
-  - Описание: index.md
-  - Теория:
-    - Reverse engineering приложения "E-commerce": e-commerce-theory.md
-    - Метрики: metrics.md
-    - Основные метрики для мониторинга состояния кластера: metrics_types.md
-    - Архитектура HA кластера: architecture.md
-    - Компоненты control plane: cp.md
-    - Автоматизированное развертывание K8s: k8s-deploy.md
-  - Системные требования: requirements.md
-  - Установка ПО:
-    - Установка minikube: minikube.md
-    - Установка k3s: k3s.md
-    - Установка остального ПО: others_pp.md
-  - Развертывание тестового стенда:
-    - Приложение "E-commerce": e-commerce-deploy.md
-    - Хранилище: storage.md
-    - Система мониторинга: monitoring.md
-  - Компоненты MAD:
-    - Конфигурация: config.md
-    - Сервис сбора данных: metrics_collection.md
-    - Сервис обучения моделей: model_training.md
-    - Сервис предсказания аномалий: anomaly_prediction.md
-    - Сервис уведомлений: notification.md
-  - Сбор метрик: 
-    - Метрики kubernetes: control-plane-metrics.md
-    - Istio: istio.md
+  - Описание проекта: index.md
+  - Быстрый старт:
+    - Системные требования: getting-started/requirements.md
+    - Создание сервера: getting-started/terraform.md
+    - Настройка сервера:
+      - Сеть и доступы: getting-started/network.md
+      - Установка инфраструктурного ПО:
+        - На хост:
+          - Ansible: getting-started/ansible.md
+          - Ручная установка:
+            - Установка minikube: getting-started/minikube.md
+            - Установка k3s: getting-started/k3s.md
+            - Установка остального ПО: getting-started/others_pp.md
+        - В кластер k8s:
+          - Приложение "E-commerce": getting-started/e-commerce-deploy.md
+          - Хранилище: getting-started/storage.md
+          - Система мониторинга: getting-started/monitoring.md
+      - Настройка PostgreSQL: getting-started/mad_install.md
+      - Установка MAD: getting-started/mad_install.md
+    - Быстрый запуск: getting-started/quickstart.md
+  - Архитектура:
+      - Обзор: mad/overview.md
+      - Конфигурация: mad/config.md
+      - База данных: mad/data_base.md
+      - Сервис сбора данных: mad/metrics_collection.md
+      - Сервис обучения моделей: mad/model_training.md
+      - Сервис предсказания аномалий: mad/anomaly_prediction.md
+      - Сервис уведомлений: mad/notification.md
+  - Мониторинг: 
+    - Сбор метрик: 
+      - Метрики kubernetes: control-plane-metrics.md
+    - Сбор логов: 
+      - Логи kubernetes: control-plane-metrics.md
+      - Istio: istio.md
   - CI/CD: ci-cd.md
-  - Анализ аномалий: 
-    - Сontrol plane: breakdown1.md
+  - Архив:
+    - Анализ аномалий: 
+      - Сontrol plane: breakdown1.md
+    - Теория:
+      - Reverse engineering приложения "E-commerce": e-commerce-theory.md
+      - Метрики: metrics.md
+      - Основные метрики для мониторинга состояния кластера: metrics_types.md
+      - Архитектура HA кластера: architecture.md
+      - Компоненты control plane: cp.md
+      - Автоматизированное развертывание K8s: k8s-deploy.md
 
 extra_css:
   - css/extra.css
@@ -55,6 +71,7 @@ plugins:
   - search
   - table-reader
   - include-markdown
+  - mermaid2
 markdown_extensions:
     - toc:
         permalink: true
@@ -74,5 +91,6 @@ markdown_extensions:
     - pymdownx.snippets
     - attr_list
     - md_in_html
+    - tables
 
 copyright: Copyright &copy; 2024 <a href="https://t.me/vladaderina">Vlada Derina</a>.

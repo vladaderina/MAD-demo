@@ -10,6 +10,7 @@ terraform/terraform.tfstate
 terraform/.terraform.lock.hcl
 terraform/.terraform.d/
 terraform/.terraform/
+terraform/terraform.tfvars
 terraform/.onlineboutique/
 src/mad/main-config.yaml
 src/mad/predictor/config_minimal.yaml

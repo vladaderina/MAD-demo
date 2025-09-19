@@ -1,45 +1,38 @@
 ---
 - name: Backup sshd config
+  become: yes
   copy:
     src: /etc/ssh/sshd_config
     dest: /etc/ssh/sshd_config.backup
     remote_src: yes
 
 - name: Configure SSH hardening
+  become: yes
   template:
     src: templates/sshd_config.j2
     dest: /etc/ssh/sshd_config
     owner: root
     group: root
     mode: '0644'
-  notify: restart ssh
-
-- name: Create .ssh directory for root
-  file:
-    path: /root/.ssh
-    state: directory
-    mode: '0700'
-
-- name: Deploy authorized keys
-  copy:
-    src: files/authorized_keys
-    dest: /root/.ssh/authorized_keys
-    mode: '0600'
+  notify: restart sshd
 
 - name: Install fail2ban if enabled
+  become: yes
   apt:
     name: fail2ban
     state: present
   when: enable_fail2ban
 
 - name: Configure fail2ban
+  become: yes
   copy:
-    src: files/jail.local
+    src: jail.local
     dest: /etc/fail2ban/jail.local
   when: enable_fail2ban
   notify: restart fail2ban
 
 - name: Install google-authenticator for 2FA
+  become: yes
   apt:
     name: libpam-google-authenticator
     state: present

@@ -1,32 +1,51 @@
-variable "postgres_host" {
-  description = "PostgreSQL host"
+variable "project_name" {
+  description = "Название проекта"
+  type        = string
+  default     = "mad-single"
+}
+
+variable "yc_folder_id" {
+  description = "Yandex Cloud Folder ID"
   type        = string
 }
 
-variable "postgres_port" {
-  description = "PostgreSQL port"
+variable "yc_cloud_id" {
+  description = "Yandex Cloud ID"
+  type        = string
+}
+
+variable "yc_zone" {
+  description = "Зона доступности"
+  type        = string
+  default     = "ru-central1-a"
+}
+
+variable "yc_ssh_key_path" {
+  description = "Путь до публичного SSH-ключа"
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
+variable "yc_image_id" {
+  description = "ID образа (например Ubuntu 22.04)"
+  type        = string
+  default     = "fd8n7sjqk8k2********" # замените на актуальный ID
+}
+
+variable "vm_cores" {
+  description = "Количество vCPU"
   type        = number
+  default     = 4
 }
 
-variable "postgres_user" {
-  description = "PostgreSQL admin username"
-  type        = string
+variable "vm_memory" {
+  description = "Память (в ГБ)"
+  type        = number
+  default     = 8
 }
 
-variable "postgres_password" {
-  description = "PostgreSQL admin password"
-  type        = string
-  sensitive   = true
-}
-
-variable "grafana_db_password" {
-  description = "Password for Grafana DB user"
-  type        = string
-  sensitive   = true
-}
-
-variable "mad_db_password" {
-  description = "Password for MAD database user"
-  type        = string
-  sensitive   = true
+variable "vm_disk_size" {
+  description = "Размер диска (в ГБ)"
+  type        = number
+  default     = 50
 }

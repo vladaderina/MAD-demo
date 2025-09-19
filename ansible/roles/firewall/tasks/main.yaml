@@ -1,10 +1,4 @@
 ---
-- name: Check if firewall should be enabled
-  debug:
-    msg: "Firewall configuration skipped (firewall_enabled = false)"
-  when: not firewall_enabled | default(true)
-  changed_when: false
-
 - name: Install ufw
   become: yes
   apt:
@@ -12,7 +6,7 @@
     state: present
   when: firewall_enabled | default(true)
 
-- name: Ensure UFW allows SSH before making changes
+- name: Allow SSH (22/tcp)
   become: yes
   ufw:
     rule: allow
@@ -20,19 +14,19 @@
     proto: tcp
   when: firewall_enabled | default(true)
 
-- name: Set default UFW policies (BUT keep incoming allow temporarily)
+- name: Set default UFW policies
   become: yes
   ufw:
     state: enabled
     direction: "{{ item.direction }}"
     policy: "{{ item.policy }}"
   loop:
-    - { direction: 'incoming', policy: 'allow' }  # Временно разрешаем входящие!
+    - { direction: 'incoming', policy: 'deny' }
     - { direction: 'outgoing', policy: 'allow' }
     - { direction: 'routed', policy: 'deny' }
   when: firewall_enabled | default(true)
 
-- name: Configure firewall rules based on service_ports
+- name: Configure firewall rules for services
   become: yes
   ufw:
     rule: "{{ item.0.state }}"
@@ -40,25 +34,4 @@
     proto: "{{ item.0.protocol }}"
     src: "{{ item.1 }}"
   loop: "{{ service_ports | subelements('allowed_ips') }}"
-  when: firewall_enabled | default(true)
-
-- name: Allow internal network communication
-  become: yes
-  ufw:
-    rule: allow
-    from: "{{ internal_network }}"
-  when: firewall_enabled | default(true)
-
-# Только в самом конце меняем политику на deny!
-# - name: Set final restrictive policy
-#   become: yes
-#   ufw:
-#     direction: incoming
-#     policy: deny
-#   when: firewall_enabled | default(true)
-
-- name: Enable ufw
-  become: yes
-  ufw:
-    state: enabled 
   when: firewall_enabled | default(true)

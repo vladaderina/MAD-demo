@@ -1,49 +1,93 @@
 ---
-- name: Install PostgreSQL
+- name: Update apt cache
+  become: yes
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install PostgreSQL and dependencies
+  become: yes
   apt:
-    name: "postgresql-{{ postgresql_version }}"
+    name:
+      - postgresql-{{ postgresql_version }}
+      - postgresql-client-{{ postgresql_version }}
+      - libpq-dev
+      - python3-psycopg2
     state: present
 
 - name: Ensure PostgreSQL data directory exists
   file:
-    path: "{{ postgresql_data_dir }}"
+    path: /var/lib/postgresql/{{ postgresql_version }}/main
     state: directory
     owner: postgres
     group: postgres
     mode: '0700'
 
 - name: Configure PostgreSQL listen addresses
+  become: yes
   lineinfile:
     path: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
-    regexp: "^listen_addresses"
+    regexp: "^#?listen_addresses"
     line: "listen_addresses = '{{ postgresql_listen_addresses }}'"
     backup: yes
 
 - name: Configure PostgreSQL port
+  become: yes
   lineinfile:
     path: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
-    regexp: "^port"
+    regexp: "^#?port"
     line: "port = {{ postgresql_port }}"
     backup: yes
+  notify: restart postgresql
 
-- name: Configure pg_hba.conf for local access only
-  copy:
-    content: |
-      # TYPE  DATABASE        USER            ADDRESS                 METHOD
-      local   all             all                                     peer
-      host    all             all             127.0.0.1/32            scram-sha-256
-      host    all             all             ::1/128                 scram-sha-256
+- name: Configure pg_hba.conf
+  become: yes
+  template:
+    src: pg_hba.conf.j2
     dest: "/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: '0640'
     backup: yes
-
-- name: Restart PostgreSQL
-  systemd:
-    name: postgresql
-    state: restarted
+  notify: restart postgresql
 
 - name: Change postgres user password
+  become: yes
   become_user: postgres
   postgresql_user:
     name: postgres
     password: "{{ vault_postgres_password | default('change_me_please') }}"
     encrypted: yes
+    login_user: postgres
+    login_unix_socket: /var/run/postgresql
+
+- name: Create PostgreSQL databases
+  become: yes
+  become_user: postgres
+  postgresql_db:
+    name: "{{ item.databases | first }}"
+    encoding: "UTF8"
+    lc_collate: "C.UTF-8"
+    lc_ctype: "C.UTF-8"
+    template: template0
+    state: present
+  loop: "{{ postgresql_users }}"
+
+- name: Create PostgreSQL users
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    encrypted: yes
+    state: present
+  loop: "{{ postgresql_users }}"
+
+- name: Grant privileges to users
+  become: yes
+  become_user: postgres
+  postgresql_privs:
+    db: "{{ item.databases | first }}"
+    roles: "{{ item.name }}"
+    type: database
+    privs: ALL
+  loop: "{{ postgresql_users }}"

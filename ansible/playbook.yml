@@ -7,16 +7,16 @@
     #   tags: base_hardening
     # - role: firewall
     #   tags: firewall
-    - role: ssh_hardening
-      tags: ssh_hardening
+    # - role: ssh_hardening
+    #   tags: ssh_hardening
 
 - name: Install and configure monitoring stack
   hosts: spaceweb
   vars_files:
     - group_vars/all.yml
   roles:
-    - role: postgresql
-      tags: postgresql
+    # - role: postgresql
+    #   tags: postgresql
     - role: victoriametrics
       tags: victoriametrics
     - role: loki

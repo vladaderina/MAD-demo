@@ -1,115 +1,83 @@
 terraform {
   required_providers {
-    postgresql = {
-      source  = "cyrilgdn/postgresql"
-#      version = "~> 1.7.1"
+    yandex = {
+      source  = "yandex-cloud/yandex"
+      version = ">= 0.98.0"
     }
+  }
+  required_version = ">= 1.6.0"
+}
+
+provider "yandex" {
+  folder_id = var.yc_folder_id
+  cloud_id  = var.yc_cloud_id
+  zone      = var.yc_zone
+}
+
+# Сеть
+resource "yandex_vpc_network" "this" {
+  name = "${var.project_name}-network"
+}
+
+resource "yandex_vpc_subnet" "this" {
+  name           = "${var.project_name}-subnet"
+  zone           = var.yc_zone
+  network_id     = yandex_vpc_network.this.id
+  v4_cidr_blocks = ["10.0.0.0/24"]
+}
+
+# Firewall
+resource "yandex_vpc_security_group" "ssh" {
+  name       = "${var.project_name}-sg"
+  network_id = yandex_vpc_network.this.id
+
+  ingress {
+    description    = "Allow SSH"
+    protocol       = "TCP"
+    port           = 22
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol       = "ANY"
+    description    = "Allow all egress"
+    v4_cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-provider "postgresql" {
-  host     = var.postgres_host
-  port     = var.postgres_port                        
-  username = var.postgres_user
-  password = var.postgres_password
-  database = "postgres"
-  sslmode  = "disable"
+# Статический IP
+resource "yandex_vpc_address" "static_ip" {
+  name = "${var.project_name}-ip"
 }
 
-resource "postgresql_database" "grafana" {
-  name = "grafana"
-}
+# ВМ
+resource "yandex_compute_instance" "vm" {
+  name        = "${var.project_name}-vm"
+  platform_id = "standard-v3"
+  zone        = var.yc_zone
 
-resource "postgresql_role" "grafana_user" {
-  name     = "grafana"
-  password = var.grafana_db_password
-  login    = true
-  superuser = false
-}
+  resources {
+    cores  = var.vm_cores
+    memory = var.vm_memory
+    core_fraction = 100
+  }
 
-resource "postgresql_grant" "grafana_grant" {
-  database    = postgresql_database.grafana.name
-  role        = postgresql_role.grafana_user.name
-  object_type = "database"
-  privileges  = ["ALL"]
-}
-
-resource "postgresql_default_privileges" "grant_all_tables" {
-  owner      = "pg_database_owner"
-  role       = postgresql_role.grafana_user.name
-  database   = postgresql_database.grafana.name
-  schema     = "public"
-  object_type = "table"
-  privileges  = ["SELECT", "INSERT", "UPDATE", "DELETE"]
-}
-
-resource "postgresql_grant" "grant_create_on_schema" {
-  role = "grafana"
-  database  = "grafana"
-  schema    = "public"
-  object_type = "schema"
-  privileges = ["CREATE"]
-
-  depends_on = [postgresql_database.grafana]
-}
-
-resource "postgresql_database" "ml_models" {
-  name = "ml_models"
-}
-
-resource "postgresql_schema" "models_schema" {
-  name     = "modeling"
-  database = postgresql_database.ml_models.name
-}
-
-resource "postgresql_extension" "uuid" {
-  name     = "uuid-ossp"
-  database = postgresql_database.ml_models.name
-}
-
-resource "postgresql_table" "models_table" {
-  name     = "models"
-  schema   = postgresql_schema.models_schema.name
-  database = postgresql_database.ml_models.name
-
-  owner = "mad"
-
-  depends_on = [postgresql_schema.models_schema]
-
-  columns = [
-    {
-      name = "id"
-      type = "uuid"
-      default = "uuid_generate_v4()"
-      null = false
-    },
-    {
-      name = "name"
-      type = "text"
-      null = false
-    },
-    {
-      name = "labels"
-      type = "jsonb"
-      null = false
-    },
-    {
-      name = "config"
-      type = "jsonb"
-      null = false
-    },
-    {
-      name = "history"
-      type = "jsonb"
-      null = false
-    },
-    {
-      name = "created_at"
-      type = "timestamp"
-      default = "now()"
-      null = false
+  boot_disk {
+    initialize_params {
+      image_id = var.yc_image_id
+      size     = var.vm_disk_size
     }
-  ]
+  }
 
-  primary_key = ["id"]
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.this.id
+    nat                = true
+    nat_ip_address     = yandex_vpc_address.static_ip.external_ipv4_address.0.address
+    security_group_ids = [yandex_vpc_security_group.ssh.id]
+  }
+
+  metadata = {
+    ssh-keys  = "ubuntu:${file(var.yc_ssh_key_path)}"
+    user-data = file("${path.module}/cloud-init.yaml")
+  }
 }
