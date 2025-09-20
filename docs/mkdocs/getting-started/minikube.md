@@ -49,7 +49,7 @@ Requires=network.target
 User=vderina
 ExecStart=/usr/local/bin/minikube start --driver=kvm2 --extra-config=scheduler.bind-address=<node-ip> --extra-config=controller-manager.bind-address=<node-ip>
 ExecStop=/usr/local/bin/minikube stop
-Type=simple
+Type=simple 
 RemainAfterExit=yes
 
 [Install]
