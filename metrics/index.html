@@ -1,0 +1,2467 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Документация по проекту Metrics Anomaly Detection">
+      
+      
+        <meta name="author" content="Vlada Derina">
+      
+      
+        <link rel="canonical" href="https://vladaderina.github.io/MAD/metrics/">
+      
+      
+        <link rel="prev" href="../e-commerce-theory/">
+      
+      
+        <link rel="next" href="../metrics_types/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
+    
+    
+      
+        <title>Метрики - Metrics Anomaly Detection</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M22%2012a10%2010%200%200%201-10%2010A10%2010%200%200%201%202%2012%2010%2010%200%200%201%2012%202a10%2010%200%200%201%2010%2010M6%2013h8l-3.5%203.5%201.42%201.42L17.84%2012l-5.92-5.92L10.5%207.5%2014%2011H6z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kubernetes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Metrics Anomaly Detection" class="md-header__button md-logo" aria-label="Metrics Anomaly Detection" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Metrics Anomaly Detection
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Метрики
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/vladaderina/MAD/tree/main" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Metrics Anomaly Detection" class="md-nav__button md-logo" aria-label="Metrics Anomaly Detection" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Metrics Anomaly Detection
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/vladaderina/MAD/tree/main" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Описание проекта
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Быстрый старт
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Быстрый старт
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/requirements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Системные требования
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/terraform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Создание сервера
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Настройка сервера
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Настройка сервера
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/network/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сеть и доступы
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2" id="__nav_2_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Установка инфраструктурного ПО
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Установка инфраструктурного ПО
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2_1" id="__nav_2_3_2_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    На хост
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_3_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            На хост
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ansible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2_1_2" id="__nav_2_3_2_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Ручная установка
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_2_3_2_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            Ручная установка
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/minikube/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка minikube
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/k3s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка k3s
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/others_pp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка остального ПО
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2_2" id="__nav_2_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    В кластер k8s
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            В кластер k8s
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/e-commerce-deploy.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Приложение "E-commerce"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Хранилище
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Система мониторинга
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/mad_install.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Настройка PostgreSQL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/mad_install.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка MAD
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Быстрый запуск
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Архитектура
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Архитектура
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Обзор
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/config.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Конфигурация
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/data_base.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    База данных
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/metrics_collection.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис сбора данных
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/model_training.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис обучения моделей
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/anomaly_prediction.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис предсказания аномалий
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/notification.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис уведомлений
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Мониторинг
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Мониторинг
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Сбор метрик
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Сбор метрик
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-plane-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Метрики kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Сбор логов
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Сбор логов
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-plane-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Метрики kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../istio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Istio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ci-cd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CI/CD
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Архив
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Архив
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Анализ аномалий
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Анализ аномалий
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../breakdown1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сontrol plane
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Теория
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Теория
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../e-commerce-theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reverse engineering приложения "E-commerce"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Метрики
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Метрики
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики в Kubernetes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Реестр метрик
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Что из себя представляют метрики
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ключевые характеристики метрик
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      Список метрик компонент Control Plane
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Список метрик компонент Control Plane">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kube-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики kube-api
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики scheduler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики controller manager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики pod
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики container
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#etcd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики etcd
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Полезные команды
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Основные метрики для мониторинга состояния кластера
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Архитектура HA кластера
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Компоненты control plane
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k8s-deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Автоматизированное развертывание K8s
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики в Kubernetes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Реестр метрик
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Что из себя представляют метрики
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ключевые характеристики метрик
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      Список метрик компонент Control Plane
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Список метрик компонент Control Plane">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kube-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики kube-api
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики scheduler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controller-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики controller manager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики pod
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики container
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#etcd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Метрики etcd
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Полезные команды
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Метрики</h1>
+
+<h2 id="kubernetes">Метрики в Kubernetes<a class="headerlink" href="#kubernetes" title="Permanent link">&para;</a></h2>
+<p><strong>Метрики</strong> — это измеряемые значения, которые предоставляют информацию о состоянии системы. Например, время выполнения операции, количество запросов, объем используемой памяти и т.д.
+В Kubernetes метрики используются для отслеживания различных аспектов работы кластера, таких как производительность API-сервера, состояние узлов, работоспособность подов и т.д. Метрики могут быть использованы для мониторинга, диагностики проблем и принятия решений о масштабировании ресурсов.
+Метрики sum измеряют общее время, затраченное на выполнение определенных операций, включая процессорное время, время ожидания ввода-вывода, сетевые задержки и другие задержки. Это позволяет получить полное представление о производительности обработки запросов</p>
+<h2 id="_1">Реестр метрик<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p><strong>Реестр метрик</strong> — это централизованное хранилище, где регистрируются все метрики. В Kubernetes для этого используется пакет k8s.io/component-base/metrics/legacyregistry.</p>
+<p>Реестр позволяет централизованно управлять метриками, регистрировать их и предоставлять доступ к ним через API.</p>
+<h2 id="_2">Что из себя представляют метрики<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>Рассмотрим пример с метриками Admission Controller.</p>
+<p>В документации Kubernetes сказано, что Admissiion Controller выполняют роль  <em>middleware</em> в API-сервере: перед обработкой API запроса, например, для создания Pod они добавляют к запросу дополнительную информацию.</p>
+<p>Исполнение кода контроллеров занимает процессорное время.</p>
+<p>Чтобы не отслеживать </p>
+<p>Метрика <strong>step_admission_duration_seconds</strong></p>
+<div class="language-go highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Инициализация метрики</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">newAdmissionMetrics</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">AdmissionMetrics</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="w">    </span><span class="nx">controller</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">metricSet</span><span class="p">{</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="w">        </span><span class="nx">latencies</span><span class="p">:</span><span class="w"> </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">NewHistogramVec</span><span class="p">(</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="w">            </span><span class="o">&amp;</span><span class="nx">metrics</span><span class="p">.</span><span class="nx">HistogramOpts</span><span class="p">{</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="w">                </span><span class="nx">Namespace</span><span class="p">:</span><span class="w">      </span><span class="nx">namespace</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="w">                </span><span class="nx">Subsystem</span><span class="p">:</span><span class="w">      </span><span class="nx">subsystem</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">                </span><span class="nx">Name</span><span class="p">:</span><span class="w">           </span><span class="s">&quot;controller_admission_duration_seconds&quot;</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">                </span><span class="nx">Help</span><span class="p">:</span><span class="w">           </span><span class="s">&quot;Admission controller latency histogram in seconds, identified by name and broken out for each operation and API resource and type (validate or admit).&quot;</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="w">                </span><span class="nx">Buckets</span><span class="p">:</span><span class="w">        </span><span class="p">[]</span><span class="kt">float64</span><span class="p">{</span><span class="mf">0.005</span><span class="p">,</span><span class="w"> </span><span class="mf">0.025</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.5</span><span class="p">},</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">                </span><span class="nx">StabilityLevel</span><span class="p">:</span><span class="w"> </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">STABLE</span><span class="p">,</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="w">            </span><span class="p">},</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="w">            </span><span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;operation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;rejected&quot;</span><span class="p">},</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w">        </span><span class="p">),</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="w">        </span><span class="nx">latenciesSummary</span><span class="p">:</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="w">    </span><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<div class="language-go highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Инициализация функции</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1">1</a></span>
+<span class="normal"><a href="#__codelineno-1-2">2</a></span>
+<span class="normal"><a href="#__codelineno-1-3">3</a></span>
+<span class="normal"><a href="#__codelineno-1-4">4</a></span>
+<span class="normal"><a href="#__codelineno-1-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><span class="nx">cgroupCommon</span><span class="p">)</span><span class="w"> </span><span class="nx">Update</span><span class="p">(</span><span class="nx">cgroupConfig</span><span class="w"> </span><span class="o">*</span><span class="nx">CgroupConfig</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="w">    </span><span class="nx">start</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">()</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="w">    </span><span class="k">defer</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="w">        </span><span class="nx">metrics</span><span class="p">.</span><span class="nx">CgroupManagerDuration</span><span class="p">.</span><span class="nx">WithLabelValues</span><span class="p">(</span><span class="s">&quot;update&quot;</span><span class="p">).</span><span class="nx">Observe</span><span class="p">(</span><span class="nx">metrics</span><span class="p">.</span><span class="nx">SinceInSeconds</span><span class="p">(</span><span class="nx">start</span><span class="p">))</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="w">    </span><span class="p">}()</span>
+</span></code></pre></div></td></tr></table></div>
+<h2 id="_3">Ключевые характеристики метрик<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>Типы:</p>
+<ul>
+<li>Histogram - формат предоставляет информацию о распределении времени выполнения. Например, можно узнать, сколько запросов выполняется за 10 мс, 50 мс, 100 мс и т.д.</li>
+<li>Gauge</li>
+<li>Counter</li>
+<li>Custom</li>
+</ul>
+<p>Так же для каждой метрики есть понятия:</p>
+<ul>
+<li>_sum</li>
+<li>_count</li>
+<li>_buckets</li>
+</ul>
+<h2 id="control-plane">Список метрик компонент Control Plane<a class="headerlink" href="#control-plane" title="Permanent link">&para;</a></h2>
+<h3 id="kube-api">Метрики kube-api<a class="headerlink" href="#kube-api" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>apiserver_admission_controller_admission_duration_seconds</p>
+<p>Показывает время, затраченное на выполнение контроллеров доступа (<a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/">admission controllers</a>) при обработке запросов к API-серверу.</p>
+<ul>
+<li>Stability Level: STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels: name operation rejected type</li>
+</ul>
+<p><strong>Примеры:</strong></p>
+<p>Допустим мы хотим удалить namespace kube-system, тогда контроллер NamespaceLifecycle запретит это действие, так как kube-system является системным пространством имен.</p>
+<p>Или хотим создать под с высокими требованиями CPU, тогда контроллер LimitRanger отклонит создание пода, так как запрошенное количество памяти превышает установленное ограничение.</p>
+<p>И метрика отображает для каждого контроллера:
+- количество запросов, не превышающее время t
+- общее время выполнения
+- общее количество запросов</p>
+<p class="annotate">Пример метрик: (1)</p>
+<ol>
+<li>: apiserver_admission_controller_admission_duration_seconds_bucket{name="ValidatingAdmissionWebhook",operation="UPDATE",rejected="false",type="validate",le="2.5"} 49691
+    apiserver_admission_controller_admission_duration_seconds_bucket{name="ValidatingAdmissionWebhook",operation="UPDATE",rejected="false",type="validate",le="+Inf"} 49691
+    apiserver_admission_controller_admission_duration_seconds_sum{name="ValidatingAdmissionWebhook",operation="UPDATE",rejected="false",type="validate"} 0.16454242599999996
+    apiserver_admission_controller_admission_duration_seconds_count{name="ValidatingAdmissionWebhook",operation="UPDATE",rejected="false",type="validate"} 49691</li>
+</ol>
+</li>
+<li>
+<p>apiserver_admission_step_admission_duration_seconds</p>
+<p>Показывает распределение времени выполнения шагов допуска (admission steps) в API-сервере.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels: operation rejected type</li>
+</ul>
+<p>Пример метрик:</p>
+<p>apiserver_admission_step_admission_duration_seconds_summary{operation="UPDATE",rejected="false",type="validate",quantile="0.99"} 5.6764e-05
+apiserver_admission_step_admission_duration_seconds_summary_sum{operation="UPDATE",rejected="false",type="validate"} 1.269520069000019
+apiserver_admission_step_admission_duration_seconds_summary_count{operation="UPDATE",rejected="false",type="validate"} 50556</p>
+</li>
+<li>
+<p>apiserver_admission_webhook_admission_duration_seconds</p>
+<p>Показывает распределение времени выполнения вебхуков доступа (admission webhooks) в API-сервере.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels: nameo peration rejected type</li>
+</ul>
+<p>Пример метрик: - (по умолчанию в кубере нет вебхуков доступа)</p>
+</li>
+<li>
+<p>apiserver_current_inflight_requests</p>
+<p>Предоставляет информацию о максимальном количестве одновременно обрабатываемых запросов (inflight requests) в течение последней секунды для каждого типа запроса (request kind).</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Gauge</li>
+<li>Labels: request_kind</li>
+</ul>
+<p>Пример метрик:</p>
+<p>apiserver_current_inflight_requests{request_kind="mutating"} 0
+apiserver_current_inflight_requests{request_kind="readOnly"} 1</p>
+</li>
+<li>
+<p>apiserver_longrunning_requests</p>
+<p>Предоставляет количество всех активных долговременных запросов (long-running requests), которые в данный момент обрабатываются API Server. Эта метрика разбивается по различным атрибутам, таким как тип операции (verb), группа (group), версия (version), ресурс (resource), область (scope) и компонент (component).</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Gauge</li>
+<li>Labels: component group resource scope subresource verb version</li>
+</ul>
+<p>Пример метрик:</p>
+<p>apiserver_longrunning_requests{component="apiserver",group="storage.k8s.io",resource="storageclasses",scope="cluster",subresource="",verb="WATCH",version="v1"} 4
+apiserver_longrunning_requests{component="apiserver",group="",resource="configmaps",scope="cluster",subresource="",verb="WATCH",version="v1"} 1
+apiserver_longrunning_requests{component="apiserver",group="",resource="configmaps",scope="namespace",subresource="",verb="WATCH",version="v1"} 1
+apiserver_longrunning_requests{component="apiserver",group="",resource="configmaps",scope="resource",subresource="",verb="WATCH",version="v1"} 6</p>
+</li>
+<li>
+<p>apiserver_request_duration_seconds</p>
+<p>Предоставляет информацию о распределении задержки (latency) ответов в секундах для каждого типа операции (verb), значения (dry_run), группы (group), версии (version), ресурса (resource), подресурса (subresource), области (scope) и компонента (component).</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels: component dry_run group resource scope subresource verb version</li>
+</ul>
+</li>
+<li>
+<p>apiserver_request_total</p>
+<p>Counter of apiserver requests broken out for each verb, dry run value, group, version, resource, scope, component, and HTTP response code.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels: code component dry_run group resource scope subresource verb version</li>
+</ul>
+</li>
+<li>
+<p>apiserver_requested_deprecated_apis</p>
+<p>Gauge of deprecated APIs that have been requested, broken out by API group, version, resource, subresource, and removed_release.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Gauge</li>
+<li>Labels:groupremoved_releaseresourcesubresourceversion</li>
+</ul>
+</li>
+<li>
+<p>apiserver_response_sizes</p>
+<p>Response size distribution in bytes for each group, version, verb, resource, subresource, scope and component.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels:componentgroupresourcescopesubresourceverbversion</li>
+</ul>
+</li>
+<li>
+<p>apiserver_storage_objects</p>
+<p>Number of stored objects at the time of last check split by kind. In case of a fetching error, the value will be -1.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Gauge</li>
+<li>Labels:resource</li>
+</ul>
+</li>
+<li>
+<p>apiserver_storage_size_bytes</p>
+<p>Size of the storage database file physically allocated in bytes.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:storage_cluster_id</li>
+</ul>
+</li>
+</ol>
+<h3 id="scheduler">Метрики scheduler<a class="headerlink" href="#scheduler" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>scheduler_framework_extension_point_duration_seconds</p>
+<p>Latency for running all plugins of a specific extension point.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels:extension_pointprofilestatus</li>
+</ul>
+</li>
+<li>
+<p>scheduler_pending_pods</p>
+<p>Number of pending pods, by the queue type. 'active' means number of pods in activeQ; 'backoff' means number of pods in backoffQ; 'unschedulable' means number of pods in unschedulablePods that the scheduler attempted to schedule and failed; 'gated' is the number of unschedulable pods that the scheduler never attempted to schedule because they are gated.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Gauge</li>
+<li>Labels:queue</li>
+</ul>
+</li>
+<li>
+<p>scheduler_pod_scheduling_attempts</p>
+<p>Number of attempts to successfully schedule a pod.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+</ul>
+</li>
+<li>
+<p>scheduler_pod_scheduling_duration_seconds</p>
+<p>E2e latency for a pod being scheduled which may include multiple scheduling attempts.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels:attempts</li>
+<li>Deprecated Versions:1.29.0</li>
+</ul>
+</li>
+<li>
+<p>scheduler_preemption_attempts_total</p>
+<p>Total preemption attempts in the cluster till now</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+</ul>
+</li>
+<li>
+<p>scheduler_preemption_victims</p>
+<p>Number of selected preemption victims</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+</ul>
+</li>
+<li>
+<p>scheduler_queue_incoming_pods_total</p>
+<p>Number of pods added to scheduling queues by event and queue type.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:eventqueue</li>
+</ul>
+</li>
+<li>
+<p>scheduler_schedule_attempts_total</p>
+<p>Number of attempts to schedule pods, by the result. 'unschedulable' means a pod could not be scheduled, while 'error' means an internal scheduler problem.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:profileresult</li>
+</ul>
+</li>
+<li>
+<p>scheduler_scheduling_attempt_duration_seconds</p>
+<p>Scheduling attempt latency in seconds (scheduling algorithm + binding)</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels:profileresult</li>
+</ul>
+</li>
+</ol>
+<h3 id="controller-manager">Метрики controller manager<a class="headerlink" href="#controller-manager" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>cronjob_controller_job_creation_skew_duration_seconds</p>
+<p>Time between when a cronjob is scheduled to be run, and when the corresponding job is created</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+</ul>
+</li>
+<li>
+<p>job_controller_job_pods_finished_total</p>
+<p>The number of finished Pods that are fully tracked</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:completion_moderesult</li>
+</ul>
+</li>
+<li>
+<p>job_controller_job_sync_duration_seconds</p>
+<p>The time it took to sync a job</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Histogram</li>
+<li>Labels:actioncompletion_moderesult</li>
+</ul>
+</li>
+<li>
+<p>job_controller_job_syncs_total</p>
+<p>The number of job syncs</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:actioncompletion_moderesult</li>
+</ul>
+</li>
+<li>
+<p>job_controller_jobs_finished_total</p>
+<p>The number of finished jobs</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:completion_modereasonresult</li>
+</ul>
+</li>
+</ol>
+<h3 id="node">Метрики node<a class="headerlink" href="#node" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>node_collector_evictions_total</p>
+<p>Number of Node evictions that happened since current instance of NodeController started.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:zone</li>
+</ul>
+</li>
+<li>
+<p>node_cpu_usage_seconds_total</p>
+<p>Cumulative cpu time consumed by the node in core-seconds</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+</ul>
+</li>
+<li>
+<p>node_memory_working_set_bytes</p>
+<p>Current working set of the node in bytes</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+</ul>
+</li>
+<li>
+<p>pod_cpu_usage_seconds_total</p>
+<p>Cumulative cpu time consumed by the pod in core-seconds</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:podnamespace</li>
+</ul>
+</li>
+<li>
+<p>pod_memory_working_set_bytes</p>
+<p>Current working set of the pod in bytes</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:podnamespace</li>
+</ul>
+</li>
+<li>
+<p>resource_scrape_error</p>
+<p>1 if there was an error while getting container metrics, 0 otherwise</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+</ul>
+</li>
+</ol>
+<h3 id="pod">Метрики pod<a class="headerlink" href="#pod" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>kube_pod_resource_limit</p>
+<p>Resources limit for workloads on the cluster, broken down by pod. This shows the resource usage the scheduler and kubelet expect per pod for resources along with the unit for the resource if any.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:namespacepodnodeschedulerpriorityresourceunit</li>
+</ul>
+</li>
+<li>
+<p>kube_pod_resource_request</p>
+<p>Resources requested by workloads on the cluster, broken down by pod. This shows the resource usage the scheduler and kubelet expect per pod for resources along with the unit for the resource if any.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:namespacepodnodeschedulerpriorityresourceunit</li>
+</ul>
+</li>
+<li>
+<p>kubernetes_healthcheck</p>
+<p>This metric records the result of a single healthcheck.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Gauge</li>
+<li>Labels:nametype</li>
+</ul>
+</li>
+<li>
+<p>kubernetes_healthchecks_total</p>
+<p>This metric records the results of all healthcheck.</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Counter</li>
+<li>Labels:namestatustype</li>
+</ul>
+</li>
+</ol>
+<h3 id="container">Метрики container<a class="headerlink" href="#container" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>container_cpu_usage_seconds_total</p>
+<p>Cumulative cpu time consumed by the container in core-seconds</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:containerpodnamespace</li>
+</ul>
+</li>
+<li>
+<p>container_memory_working_set_bytes</p>
+<p>Current working set of the container in bytes</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:containerpodnamespace</li>
+</ul>
+</li>
+<li>
+<p>container_start_time_seconds</p>
+<p>Start time of the container since unix epoch in seconds</p>
+<ul>
+<li>Stability Level:STABLE</li>
+<li>Type: Custom</li>
+<li>Labels:containerpodnamespace</li>
+</ul>
+</li>
+</ol>
+<h3 id="etcd">Метрики etcd<a class="headerlink" href="#etcd" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>etcd_bookmark_counts</p>
+<p>Number of etcd bookmarks (progress notify events) split by kind.</p>
+<ul>
+<li>Stability Level:ALPHA</li>
+<li>Type: Gauge</li>
+<li>Labels:resource</li>
+</ul>
+</li>
+<li>
+<p>etcd_lease_object_counts</p>
+<p>Number of objects attached to a single etcd lease.</p>
+<ul>
+<li>Stability Level:ALPHA</li>
+<li>Type: Histogram</li>
+</ul>
+</li>
+<li>
+<p>etcd_request_duration_seconds</p>
+<p>Etcd request latency in seconds for each operation and object type.</p>
+<ul>
+<li>Stability Level:ALPHA</li>
+<li>Type: Histogram</li>
+<li>Labels:operationtype</li>
+</ul>
+</li>
+<li>
+<p>etcd_request_errors_total</p>
+<p>Etcd failed request counts for each operation and object type.</p>
+<ul>
+<li>Stability Level:ALPHA</li>
+<li>Type: Counter</li>
+<li>Labels:operationtype</li>
+</ul>
+</li>
+<li>
+<p>etcd_requests_total</p>
+<p>Etcd request counts for each operation and object type.</p>
+<ul>
+<li>Stability Level:ALPHA</li>
+<li>Type: Counter</li>
+<li>Labels:operationtype</li>
+</ul>
+</li>
+<li>
+<p>etcd_version_info</p>
+<p>Etcd server's binary version</p>
+<ul>
+<li>Stability Level:ALPHA</li>
+<li>Type: Gauge</li>
+<li>Labels:binary_version</li>
+</ul>
+</li>
+</ol>
+<h2 id="_4">Полезные команды<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Команда по отображению всех метрик
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="w">    </span>kubectl<span class="w"> </span>get<span class="w"> </span>--raw<span class="w"> </span>/metrics
+</span></code></pre></div></td></tr></table></div></li>
+<li>Список включенных плагинов допуска
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>-l<span class="w"> </span><span class="nv">component</span><span class="o">=</span>kube-apiserver<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>enable-admission-plugins
+</span></code></pre></div></td></tr></table></div>
+Пример вывода команды (плагины допуска по умолчанию):
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>- --enable-admission-plugins = NamespaceLifecycle, LimitRanger, ServiceAccount, DefaultStorageClass, DefaultTolerationSeconds, NodeRestriction, MutatingAdmissionWebhook, ValidatingAdmissionWebhook, ResourceQuota
+</span></code></pre></div></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 <a href="https://t.me/vladaderina">Vlada Derina</a>.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

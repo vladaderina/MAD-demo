@@ -1,0 +1,2101 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Документация по проекту Metrics Anomaly Detection">
+      
+      
+        <meta name="author" content="Vlada Derina">
+      
+      
+        <link rel="canonical" href="https://vladaderina.github.io/MAD/metrics_types/">
+      
+      
+        <link rel="prev" href="../metrics/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
+    
+    
+      
+        <title>Основные метрики для мониторинга состояния кластера - Metrics Anomaly Detection</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M22%2012a10%2010%200%200%201-10%2010A10%2010%200%200%201%202%2012%2010%2010%200%200%201%2012%202a10%2010%200%200%201%2010%2010M6%2013h8l-3.5%203.5%201.42%201.42L17.84%2012l-5.92-5.92L10.5%207.5%2014%2011H6z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Metrics Anomaly Detection" class="md-header__button md-logo" aria-label="Metrics Anomaly Detection" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Metrics Anomaly Detection
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Основные метрики для мониторинга состояния кластера
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/vladaderina/MAD/tree/main" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Metrics Anomaly Detection" class="md-nav__button md-logo" aria-label="Metrics Anomaly Detection" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Metrics Anomaly Detection
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/vladaderina/MAD/tree/main" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Описание проекта
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Быстрый старт
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Быстрый старт
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/requirements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Системные требования
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/terraform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Создание сервера
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Настройка сервера
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Настройка сервера
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/network/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сеть и доступы
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2" id="__nav_2_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Установка инфраструктурного ПО
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Установка инфраструктурного ПО
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2_1" id="__nav_2_3_2_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    На хост
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_3_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            На хост
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ansible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2_1_2" id="__nav_2_3_2_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Ручная установка
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_2_3_2_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            Ручная установка
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/minikube/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка minikube
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/k3s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка k3s
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/others_pp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка остального ПО
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3_2_2" id="__nav_2_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    В кластер k8s
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            В кластер k8s
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/e-commerce-deploy.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Приложение "E-commerce"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Хранилище
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Система мониторинга
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/mad_install.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Настройка PostgreSQL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/mad_install.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Установка MAD
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Быстрый запуск
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Архитектура
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Архитектура
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Обзор
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/config.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Конфигурация
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/data_base.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    База данных
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/metrics_collection.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис сбора данных
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/model_training.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис обучения моделей
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/anomaly_prediction.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис предсказания аномалий
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mad/notification.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сервис уведомлений
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Мониторинг
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Мониторинг
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Сбор метрик
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Сбор метрик
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-plane-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Метрики kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Сбор логов
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Сбор логов
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-plane-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Метрики kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../istio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Istio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ci-cd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CI/CD
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Архив
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Архив
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Анализ аномалий
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Анализ аномалий
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../breakdown1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Сontrol plane
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Теория
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Теория
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../e-commerce-theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reverse engineering приложения "E-commerce"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Метрики
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Основные метрики для мониторинга состояния кластера
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Основные метрики для мониторинга состояния кластера
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Систематизация основных видов метрик
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Систематизация основных видов метрик">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Выводы
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Определение характеристик данных
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Определение характеристик данных">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Интерпретация результатов
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Стат. методы прогнозирования ВР
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Методы глубокого обучения для прогнозирования ВР
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Задача поиска аномалий во временных рядах
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Архитектура HA кластера
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Компоненты control plane
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../k8s-deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Автоматизированное развертывание K8s
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Систематизация основных видов метрик
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Систематизация основных видов метрик">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Выводы
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Определение характеристик данных
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Определение характеристик данных">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Интерпретация результатов
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Стат. методы прогнозирования ВР
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Методы глубокого обучения для прогнозирования ВР
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Задача поиска аномалий во временных рядах
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Основные метрики для мониторинга состояния кластера</h1>
+
+<p>Представим себе ситуацию, когда для среды с микросервисной архитектурой потребовалось настроить систему сбора метрик. Перед DevOps специалистом встают резонные вопросы:</p>
+<ol>
+<li>
+<p>Какие метрики должны отслеживаться?</p>
+</li>
+<li>
+<p>На какие метрики настраивать алерты?</p>
+</li>
+<li>
+<p>Как определять момент, в который должен прийти алерт?</p>
+</li>
+</ol>
+<p>Чтобы ответить на эти вопросы, проанализируем и сгруппируем основные виды метрик для среды с микросервисной архитектурой.</p>
+<h2 id="_1">Систематизация основных видов метрик<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Метрики, не поддающиеся прогнозу (собираются для общей информации):</strong></p>
+<p>Необходимость алертинга: -</p>
+<p>Способ настройки алертов: -</p>
+<p>Примеры метрик:</p>
+<ul>
+<li>Uptime (Время работы): Время, в течение которого сервис был доступен. (метрика надежности)</li>
+<li>Downtime (Время простоя): Время, в течение которого сервис был недоступен. (метрика надежности)</li>
+<li>MTTR (Mean Time to Repair): Среднее время, необходимое для восстановления работы сервиса после сбоя. (метрика надежности)</li>
+<li>MTBF (Mean Time Between Failures): Среднее время между сбоями. (метрика надежности)</li>
+</ul>
+</li>
+<li>
+<p><strong>Метрики, алерты на которые можно настроить с помощью универсального порогового значения:</strong></p>
+<p>Необходимость алертинга: +</p>
+<p>Способ настройки правил алертинга: ручной с заданным пороговым значением</p>
+<p>Примеры метрик:</p>
+<ul>
+<li>Error Rate (Частота ошибок): Процент запросов, завершившихся с ошибкой. (метрика производительности)</li>
+<li>Количество успешных транзакций: Количество успешно выполненных бизнес-операций. (бизнес метрика)</li>
+<li>Количество отказов: Количество неудачных транзакций. (бизнес метрика)</li>
+<li>Время отклика, время загрузки страницы. (метрика производительности)</li>
+</ul>
+</li>
+<li>
+<p><strong>Множественные метрики, которым характерны индивидуальные пороговые значения, человеку самому сложно определить, что есть "норма", и значения порогов следует искать в статистике из прошлого, чтобы детектировать аномалии (=выбросы) в будущем:</strong></p>
+<p>Необходимость алертинга: +</p>
+<p>Способ настройки правил алертинга: прогнозирование временного ряда с помощью <strong>статистических методов</strong> и срабатывание алерта, если фактическое не совпадает с прогнозируемым</p>
+</li>
+</ol>
+<p>Пояснение: результат запроса с ключевым словом <code>by</code> в PromQL может содержать несколько временных рядов, каждая из которых соответствует уникальному набору лейблов. Если настроен алерт в Prometheus с порогом, например, <code>&gt; 50</code>, и запрос возвращает несколько значений, то Prometheus будет оценивать каждую временную серию отдельно.</p>
+<ul>
+<li>
+<p>Prometheus будет применять условие алерта (<code>&gt; 50</code>) к каждой временной серии, возвращенной запросом. Если хотя бы одна временная серия превышает порог, алерт сработает.</p>
+</li>
+<li>
+<p>Если несколько временных серий превышают порог, алерт может сработать несколько раз. Каждое срабатывание будет соответствовать отдельной временной серии.</p>
+</li>
+</ul>
+<p>Примеры таких метрик:</p>
+<ul>
+<li>
+<p>Время выполнения бизнес-операций: Время, затраченное на выполнение конкретных бизнес-операций. (бизнес метрика)</p>
+</li>
+<li>
+<p>Latency (Задержка): Время, которое требуется для выполнения запроса. (метрика производительности). В микросервисной архитектуре каждый сервис может быть написан на своем языке программирования, обмен данными происходит по разным протоколам и, как следствие, для каждого сервиса своя норма задержки:</p>
+<div class="language-text highlight"><pre><span></span><code>- **HTTP/1.1**: Обычно задержка составляет от 50 до 200 мс для внутренних запросов и от 200 до 500 мс для внешних запросов.
+- **HTTP/2:** Задержка может быть ниже, чем у HTTP/1.1, благодаря мультиплексированию и другим оптимизациям. Обычно от 30 до 150 мс.
+- **gRPC:** Задержка может быть еще ниже, чем у HTTP/2, благодаря использованию бинарного формата и более эффективной сериализации. Обычно от 10 до 100 мс.
+------------------------------------------------------------------------------------
+- **Java:** Задержка может быть выше из-за JIT-компиляции и GC (сборщика мусора). Обычно от 50 до 200 мс.
+- **Go:** Задержка обычно ниже благодаря более эффективной работе с памятью и конкурентности. Обычно от 10 до 100 мс.
+- **Python:** Задержка может быть выше из-за интерпретации и GIL (Global Interpreter Lock). Обычно от 50 до 200 мс.
+- **Node.js:** Задержка может быть ниже благодаря асинхронной модели выполнения. Обычно от 20 до 150 мс.
+</code></pre></div>
+</li>
+</ul>
+<p>Примеры PromQL запросов, отображающие данный тип метрик:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>sum(rate(apiserver_request_total[1m])) by (verb)
+</span></code></pre></div>
+<p><img alt="Image title" src="../images/11.png" /></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sum(rate(etcd_requests_total[1m])) by (operation)
+</span></code></pre></div>
+<p><img alt="Image title" src="../images/12.png" /></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sum(rate(etcd_bookmark_counts[1m])) by (resource)
+</span></code></pre></div>
+<p><img alt="Image title" src="../images/13.png" /></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sum(rate(etcd_requests_total[1m])) by (operation)
+</span></code></pre></div>
+<p><img alt="Image title" src="../images/14.png" /></p>
+<hr />
+<p><strong>4 .</strong> <strong>Одиночные метрики для которых или нет понятия порогового значения, их "норма" может заключаться в сезонности или цикличности, или у них может существовать пороговое значение, нормальное в данном контексте, но при смене конфигурации эта норма так же изменится</strong></p>
+<p>Необходимость алертинга: +</p>
+<p>Способ настройки правил алертинга: прогнозирование временного ряда с помощью <strong>методов глубокого обучения</strong> и срабатывание алерта, если фактическое не совпадает с прогнозируемым</p>
+<p>Это, например, метрика нагрузки на CPU при настроенном VPA в кластере: то есть нагрузка растет и потом, доходя до определенного уровня, развертывается новая нода и нагрузка снова распределяется. Аномалия случается тогда, когда метрика отклоняется от своего привычного поведения
+<img align="left" alt="Image title" src="../images/17.png" /></p>
+<p>Что показывают следующие метрики - хз, но суть должна быть такая
+<img align="left" alt="Image title" src="../images/10.png" />
+<img align="left" alt="Image title" src="../images/15.png" />
+<img align="left" alt="Image title" src="../images/16.png" /></p>
+<h3 id="_2">Выводы<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>Первые две группы метрик без проблем настраиваются вручную.</p>
+<p>Третий раздел с метриками требует длительного анализа и четкого понимания, что есть "норма". Чтобы избавить человека от анализа большого объема данных, предлагается воспользоваться статистическими методами прогнозирования и детекции аномалий для данного типа метрик. Характеристика этих метрик: стационарные, несезонные.</p>
+<p>Четвертый раздел включает в себя метрики, для которых понятие "нормы" меняется со временем и требует динамического изменения правил алертинга, что невозможно контролировать вручную. Лучше всего с задачей прогнозирования динамических временных рядов и нахождении в них аномалий справляются методы машинного обучения.</p>
+<h2 id="_3">Определение характеристик данных<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>Предполагается, что большинство метрик системы (третий вид метрик) имеют стационарный, ациклический характер. Докажем это, чтобы обосновать целесообразность использование стат. моделей в будущем для прогнозирования таких временных рядов.</p>
+<p>Стационарность временного ряда определяется с определенной точностью, которая зависит от задачи и допустимой ошибки. Абсолютно точной стационарности не требуется, так как реальные данные всегда содержат некоторый уровень шума и вариаций.</p>
+<p><strong>Методы проверки стационарности:</strong></p>
+<div class="language-text highlight"><pre><span></span><code>1. **Графический анализ:**
+    - Построение графика временного ряда и визуальный анализ его поведения.
+    - Построение графика автокорреляционной функции (ACF) и частной автокорреляционной функции (PACF).
+2. **Статистические тесты:**
+    - **Тест Дики-Фуллера (Dickey-Fuller Test):** Проверяет наличие единичного корня (unit root) в ряде, что указывает на нестационарность.
+    - **Тест KPSS (Kwiatkowski-Phillips-Schmidt-Shin Test):** Проверяет стационарность ряда относительно детерминированного тренда.
+</code></pre></div>
+<p>Определим стационарность для третьего типа данных с помощью тестов Дики-Фуллера и KPSS</p>
+<p>Выгружаем метрики из Victoria Metrics:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl -v &#39;http://localhost:8481/select/0/prometheus/api/v1/query_range&#39; --data-urlencode &#39;query=sum(rate(etcd_requests_total{operation=&quot;get&quot;}[1m]))&#39; -d &#39;start=-12h&#39; -d &#39;step=5m&#39; | jq -r &#39;.data.result[].values[] | @csv&#39; &gt; output.csv
+</span></code></pre></div>
+Добавляем в файл заголовочную строку "timestamp,value"</p>
+<p>Запускаем скрипт:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>import numpy as np
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>import pandas as pd
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>from statsmodels.tsa.stattools import adfuller, kpss
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>import matplotlib.pyplot as plt
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a># Загрузка данных
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>data = pd.read_csv(&#39;output.csv&#39;, index_col=&#39;timestamp&#39;, parse_dates=True)
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a># Тест Дики-Фуллера
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>result_adf = adfuller(data[&#39;value&#39;])
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>print(&#39;ADF Statistic:&#39;, result_adf[0])
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>print(&#39;p-value:&#39;, result_adf[1])
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>print(&#39;Critical Values:&#39;, result_adf[4])
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a># Тест KPSS
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>result_kpss = kpss(data[&#39;value&#39;])
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>print(&#39;KPSS Statistic:&#39;, result_kpss[0])
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>print(&#39;p-value:&#39;, result_kpss[1])
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>print(&#39;Critical Values:&#39;, result_kpss[3])
+</span></code></pre></div></p>
+<p>По итогам теста получились следующие результаты:
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ADF Statistic: -3.89584873962392
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>p-value: 0.0020656113965745633
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Critical Values: {&#39;1%&#39;: np.float64(-3.479742586699182), &#39;5%&#39;: np.float64(-2.88319822181578), &#39;10%&#39;: np.float64(-2.578319684499314)}
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>KPSS Statistic: 0.2931810861988101
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>p-value: 0.1
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Critical Values: {&#39;10%&#39;: 0.347, &#39;5%&#39;: 0.463, &#39;2.5%&#39;: 0.574, &#39;1%&#39;: 0.739}
+</span></code></pre></div></p>
+<h3 id="_4">Интерпретация результатов<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>Значение статистики KPSS (0.2931810861988101) меньше всех критических значений (0.347, 0.463, 0.574, 0.739). Это означает, что ряд может быть стационарным на всех уровнях значимости (10%, 5%, 2.5%, 1%).</p>
+<p>p-value равно 0.1, что больше стандартного уровня значимости 0.05. Это означает, что у нас нет достаточных оснований отвергнуть нулевую гипотезу о стационарности ряда.
+Результаты теста KPSS указывают на то, что временной ряд может быть стационарным. </p>
+<p>Значение статистики KPSS меньше всех критических значений, а p-value больше стандартного уровня значимости 0.05. Это позволяет сделать вывод о том, что ряд стационарен.</p>
+<h2 id="_5">Стат. методы прогнозирования ВР<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>AR</strong>
+Авторегрессия — это статистический метод, который используется для моделирования взаимосвязи между зависимой переменной (целевой) и одной или несколькими независимыми переменными (предикторами). В контексте прогнозирования временных рядов, регрессия может использоваться для моделирования зависимости будущих значений временного ряда от его прошлых значений и других факторов.
+Пример:</li>
+<li>
+<p>Линейная регрессия: Модель линейной регрессии предполагает, что зависимость между зависимой переменной и предикторами линейна:
+yt=β0+β1xt−1+β2xt−2+ϵt
+(формулы, формулы, формулы)
+Хотя метод регрессии может быть полезен для прогнозирования временных рядов, у него есть несколько недостатков:
+Метод регрессии предполагает линейную зависимость между предикторами и целевой переменной. Если зависимость нелинейная, точность прогноза может быть низкой.
+Регрессионные модели чувствительны к выбросам, которые могут значительно исказить результаты.
+Метод регрессии не учитывает сезонность и тренд в данных. Для учета этих факторов требуется дополнительная обработка данных.
+Выбор количества предикторов (лагов) может быть сложным. Слишком много предикторов может привести к переобучению, а слишком мало — к недообучению.
+Обновление модели с каждым новым наблюдением может быть вычислительно затратным, особенно для больших наборов данных.</p>
+</li>
+<li>
+<p><strong>MA</strong></p>
+</li>
+<li>
+<p><strong>ARIMA</strong></p>
+</li>
+<li>
+<p><strong>ARIMA (Авторегрессионная интегрированная модель скользящего среднего):</strong> Модель ARIMA(p, d, q) объединяет авторегрессию, интегрирование и скользящее среднее для моделирования временных рядов.</p>
+</li>
+<li>
+<p><strong>SARIMA</strong></p>
+</li>
+<li>
+<p><strong>SARIMA (Сезонная ARIMA):</strong> Модель SARIMA(p, d, q)(P, D, Q)s добавляет сезонные компоненты к модели ARIMA.</p>
+</li>
+<li>
+<p><strong>Метод экспоненциального сглаживания</strong>
+(Exponential Smoothing, ES) — это техника прогнозирования временных рядов, которая присваивает экспоненциально убывающие веса прошлым наблюдениям. Это позволяет модели фокусироваться на последних данных, что особенно полезно для рядов с нестационарностью.
+Особенности:</p>
+</li>
+<li>Экспоненциальное сглаживание присваивает экспоненциально убывающие веса прошлым наблюдениям, что позволяет модели фокусироваться на последних данных.</li>
+<li>
+<p>ES может быть использовано для рядов без тренда и сезонности (простое экспоненциальное сглаживание), с трендом (двойное экспоненциальное сглаживание) и с трендом и сезонностью (тройное экспоненциальное сглаживание, или Holt-Winters).</p>
+</li>
+<li>
+<p><strong>Классификационно-регрессионные деревья (CART)</strong>
+Метод машинного обучения, который используется для решения задач классификации и регрессии. В контексте прогнозирования временных рядов, CART могут использоваться для прогнозирования будущих значений на основе исторических данных.
+<strong>Пример:</strong></p>
+</li>
+<li><strong>Регрессионное дерево:</strong> Дерево решений строится путем разделения данных на подмножества на основе значений предикторов. Каждый лист дерева соответствует прогнозу для данного подмножества.
+<strong>Преимущества:</strong></li>
+<li>Может моделировать нелинейные зависимости.</li>
+<li>Устойчив к выбросам.
+<strong>Недостатки:</strong></li>
+<li>Подвержен переобучению.</li>
+<li>
+<p>Нестабильность: небольшие изменения в данных могут привести к значительным изменениям в структуре дерева.</p>
+</li>
+<li>
+<p>Генетические алгоритмы (GA) (Evgeniev)
+Это метод оптимизации, основанный на принципах естественного отбора и генетики. В контексте прогнозирования временных рядов, GA могут использоваться для оптимизации параметров моделей или для поиска оптимальной структуры модели.
+<strong>Пример:</strong></p>
+</li>
+<li><strong>Оптимизация параметров модели:</strong> GA могут использоваться для поиска оптимальных значений параметров модели ARIMA.
+<strong>Преимущества:</strong></li>
+<li>Может находить глобальный оптимум.</li>
+<li>Гибкость: может применяться к широкому классу задач.
+<strong>Недостатки:</strong></li>
+<li>Высокая вычислительная сложность.</li>
+<li>
+<p>Требует тщательной настройки параметров алгоритма.</p>
+</li>
+<li>
+<p>Опорные векторы (SVM) (Evgeniev)
+Это метод машинного обучения, который используется для решения задач классификации и регрессии. В контексте прогнозирования временных рядов, SVM могут использоваться для прогнозирования будущих значений на основе исторических данных.
+<strong>Пример:</strong></p>
+</li>
+<li><strong>Регрессия SVM:</strong> Модель SVM строит гиперплоскость, которая минимизирует ошибку прогнозирования.
+<strong>Преимущества:</strong></li>
+<li>Может моделировать нелинейные зависимости с использованием ядерных функций.</li>
+<li>Устойчив к выбросам.
+<strong>Недостатки:</strong></li>
+<li>Высокая вычислительная сложность.</li>
+<li>Требует тщательной настройки параметров  </li>
+</ol>
+<h2 id="_6">Методы глубокого обучения для прогнозирования ВР<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<h2 id="_7">Задача поиска аномалий во временных рядах<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<p>Цель: Обнаружить нехарактерные или необычные значения (аномалии) в временном ряду.</p>
+<p>Примеры методов:
+- Статистические методы: Например, методы на основе Z-оценки, где аномалия определяется как значение, значительно отличающееся от среднего.
+- Методы на основе расстояния: Например, метод k-ближайших соседей (k-NN), где аномалия определяется как точка, далекая от своих соседей.
+- Методы на основе машинного обучения: Например, использование автоэнкодеров (autoencoders) для обнаружения аномалий, где модель обучается восстанавливать "нормальные" данные, а аномалии — это те данные, которые модель не может восстановить хорошо.
+Методы из KAD:
+autoencoder</p>
+<ul>
+<li>Производительность. Throughput (Пропускная способность): Количество запросов, обрабатываемых системой в единицу времени.</li>
+<li>Производительность. Saturation (Насыщение): Степень использования ресурсов системы (например, CPU, память, сеть).</li>
+<li>Ресурсы. CPU Usage (Использование CPU): Уровень использования процессорного времени. (+рассмотреть ситуацию с Horisontal Pod Autoscaler)</li>
+<li>Безопасность. Количество попыток входа: Количество попыток аутентификации.</li>
+<li>Ресурсы. Memory Usage (Использование памяти): Объем используемой оперативной памяти.</li>
+<li>Ресурсы. Disk I/O (Ввод/вывод на диск): Скорость чтения/записи на диск.</li>
+<li>Ресурсы. Network I/O (Сетевой ввод/вывод): Скорость передачи данных по сети.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 <a href="https://t.me/vladaderina">Vlada Derina</a>.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
