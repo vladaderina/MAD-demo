@@ -2,3 +2,4 @@ pymdown-extensions
 mkdocs-material
 mkdocs-table-reader-plugin
 mkdocs-include-markdown-plugin
+mkdocs-mermaid2-plugin
